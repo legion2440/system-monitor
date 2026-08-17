@@ -39,7 +39,23 @@ add_library(monesys_qt STATIC
 target_include_directories(monesys_qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(monesys_qt PUBLIC monesys_core Qt6::Quick Qt6::QuickControls2)
 
-set_source_files_properties(ui/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+# Keep source files grouped under ui/ while exposing the intended QML module layout.
+set_source_files_properties(ui/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+set_source_files_properties(ui/Theme.qml PROPERTIES QT_RESOURCE_ALIAS Theme.qml QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(ui/Utils.js PROPERTIES QT_RESOURCE_ALIAS Utils.js)
+set_source_files_properties(ui/components/MetricCard.qml PROPERTIES QT_RESOURCE_ALIAS components/MetricCard.qml)
+set_source_files_properties(ui/components/HistoryGraph.qml PROPERTIES QT_RESOURCE_ALIAS components/HistoryGraph.qml)
+set_source_files_properties(ui/components/GraphControls.qml PROPERTIES QT_RESOURCE_ALIAS components/GraphControls.qml)
+set_source_files_properties(ui/components/CoreTile.qml PROPERTIES QT_RESOURCE_ALIAS components/CoreTile.qml)
+set_source_files_properties(ui/components/SidebarItem.qml PROPERTIES QT_RESOURCE_ALIAS components/SidebarItem.qml)
+set_source_files_properties(ui/screens/OverviewScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/OverviewScreen.qml)
+set_source_files_properties(ui/screens/CpuScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/CpuScreen.qml)
+set_source_files_properties(ui/screens/MemoryScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/MemoryScreen.qml)
+set_source_files_properties(ui/screens/NetworkScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/NetworkScreen.qml)
+set_source_files_properties(ui/screens/ProcessesScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/ProcessesScreen.qml)
+set_source_files_properties(ui/screens/SensorsScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/SensorsScreen.qml)
+set_source_files_properties(ui/screens/SettingsScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/SettingsScreen.qml)
+set_source_files_properties(ui/screens/UnavailableScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/UnavailableScreen.qml)
 
 qt_add_executable(monesys src/main.cpp)
 qt_add_qml_module(monesys
@@ -70,7 +86,7 @@ if(MONESYS_BUILD_AUDIT_ALIAS)
     add_custom_command(TARGET monesys POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             $<TARGET_FILE:monesys>
-            $<TARGET_FILE_DIR:monesys>/monitor$<TARGET_FILE_SUFFIX:monesys>
+            $<TARGET_FILE_DIR:monesys>/monitor${CMAKE_EXECUTABLE_SUFFIX}
         COMMENT "Creating monitor audit alias")
 endif()
 

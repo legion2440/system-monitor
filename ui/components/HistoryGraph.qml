@@ -16,9 +16,9 @@ Canvas {
     onSamplesChanged: requestPaint()
     onScaleModeChanged: requestPaint()
     onFixedMaxChanged: requestPaint()
-    Timer { interval: Math.max(16,Math.round(1000/Math.max(1,graph.fps))); running: graph.visible; repeat: true; onTriggered: graph.requestPaint() }
+    Timer { interval: Math.max(16,Math.round(1000/Math.max(1,graph.fps))); running: graph.visible && !graph.paused; repeat: true; onTriggered: graph.requestPaint() }
     onPaint: {
-        const ctx=getContext("2d"); ctx.reset(); ctx.clearRect(0,0,width,height)
+        const ctx=getContext("2d"); ctx.clearRect(0,0,width,height)
         if(!samples||samples.length===0||width<=1||height<=1)return
         let minValue=0, maxValue=fixedMax, rawMin=Number(samples[0]), rawMax=rawMin
         for(let i=1;i<samples.length;++i){ const v=Number(samples[i]); rawMin=Math.min(rawMin,v); rawMax=Math.max(rawMax,v) }
