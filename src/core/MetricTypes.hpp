@@ -8,11 +8,11 @@
 namespace monesys {
 
 struct Capabilities {
-    bool cpu{true};
-    bool memory{true};
-    bool disk{true};
-    bool network{true};
-    bool processes{true};
+    bool cpu{false};
+    bool memory{false};
+    bool disk{false};
+    bool network{false};
+    bool processes{false};
     bool thermal{false};
     bool fan{false};
     bool gpu{false};
