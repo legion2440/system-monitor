@@ -1,0 +1,82 @@
+cmake_minimum_required(VERSION 3.21)
+
+project(MoneSys VERSION 0.1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+option(MONESYS_BUILD_TESTS "Build MoneSys tests" ON)
+option(MONESYS_BUILD_AUDIT_ALIAS "Build a second executable named monitor for the 01-edu audit" ON)
+
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2)
+qt_standard_project_setup(REQUIRES 6.5)
+
+add_library(monesys_core STATIC
+    src/core/SamplingController.cpp
+    src/platform/ProviderFactory.cpp
+)
+target_include_directories(monesys_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(monesys_core PUBLIC cxx_std_20)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_sources(monesys_core PRIVATE src/platform/linux/LinuxMetricProvider.cpp)
+elseif(WIN32)
+    target_sources(monesys_core PRIVATE src/platform/windows/WindowsMetricProvider.cpp)
+elseif(APPLE)
+    target_sources(monesys_core PRIVATE src/platform/macos/MacMetricProvider.cpp)
+else()
+    message(FATAL_ERROR "MoneSys currently supports Linux, Windows and macOS targets")
+endif()
+
+add_library(monesys_qt STATIC
+    src/qt/AppController.cpp
+    src/qt/ProcessModel.cpp
+    src/qt/NetworkModel.cpp
+    src/qt/SensorModel.cpp
+)
+target_include_directories(monesys_qt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(monesys_qt PUBLIC monesys_core Qt6::Quick Qt6::QuickControls2)
+
+set_source_files_properties(ui/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
+qt_add_executable(monesys src/main.cpp)
+qt_add_qml_module(monesys
+    URI MoneSys
+    VERSION 1.0
+    QML_FILES
+        ui/Main.qml
+        ui/Theme.qml
+        ui/Utils.js
+        ui/components/MetricCard.qml
+        ui/components/HistoryGraph.qml
+        ui/components/GraphControls.qml
+        ui/components/CoreTile.qml
+        ui/components/SidebarItem.qml
+        ui/screens/OverviewScreen.qml
+        ui/screens/CpuScreen.qml
+        ui/screens/MemoryScreen.qml
+        ui/screens/NetworkScreen.qml
+        ui/screens/ProcessesScreen.qml
+        ui/screens/SensorsScreen.qml
+        ui/screens/SettingsScreen.qml
+        ui/screens/UnavailableScreen.qml
+)
+target_link_libraries(monesys PRIVATE monesys_qt Qt6::Quick Qt6::QuickControls2)
+set_target_properties(monesys PROPERTIES OUTPUT_NAME monesys)
+
+if(MONESYS_BUILD_AUDIT_ALIAS)
+    add_custom_command(TARGET monesys POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:monesys>
+            $<TARGET_FILE_DIR:monesys>/monitor$<TARGET_FILE_SUFFIX:monesys>
+        COMMENT "Creating monitor audit alias")
+endif()
+
+if(MONESYS_BUILD_TESTS)
+    enable_testing()
+    add_executable(monesys_core_tests tests/core_tests.cpp)
+    target_link_libraries(monesys_core_tests PRIVATE monesys_core)
+    add_test(NAME monesys_core_tests COMMAND monesys_core_tests)
+endif()
