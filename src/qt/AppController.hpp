@@ -55,6 +55,7 @@ class AppController final : public QObject {
     Q_PROPERTY(SensorModel* sensors READ sensors CONSTANT)
     Q_PROPERTY(int pollIntervalMs READ pollIntervalMs WRITE setPollIntervalMs NOTIFY pollIntervalChanged)
     Q_PROPERTY(int graphFps READ graphFps WRITE setGraphFps NOTIFY graphFpsChanged)
+    Q_PROPERTY(double graphYScale READ graphYScale WRITE setGraphYScale NOTIFY graphYScaleChanged)
     Q_PROPERTY(QString yScaleMode READ yScaleMode WRITE setYScaleMode NOTIFY yScaleModeChanged)
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY pausedChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY snapshotChanged)
@@ -76,12 +77,13 @@ public:
     [[nodiscard]] ProcessModel* processes(){return &processModel_;} [[nodiscard]] NetworkModel* network(){return &networkModel_;} [[nodiscard]] SensorModel* sensors(){return &sensorModel_;}
     [[nodiscard]] int pollIntervalMs() const{return pollIntervalMs_;} void setPollIntervalMs(int milliseconds);
     [[nodiscard]] int graphFps() const{return graphFps_;} void setGraphFps(int fps);
+    [[nodiscard]] double graphYScale() const{return graphYScale_;} void setGraphYScale(double scale);
     [[nodiscard]] QString yScaleMode() const{return yScaleMode_;} void setYScaleMode(const QString& mode);
     [[nodiscard]] bool paused() const{return paused_;} void setPaused(bool paused);
     [[nodiscard]] QString lastError() const{return QString::fromStdString(snapshot_.error);}
 
 signals:
-    void snapshotChanged(); void historyChanged(); void pollIntervalChanged(); void graphFpsChanged(); void yScaleModeChanged(); void pausedChanged();
+    void snapshotChanged(); void historyChanged(); void pollIntervalChanged(); void graphFpsChanged(); void graphYScaleChanged(); void yScaleModeChanged(); void pausedChanged();
 
 private:
     void applySnapshot(Snapshot snapshot);
@@ -91,7 +93,7 @@ private:
     std::unique_ptr<SamplingController> sampler_;
     TimedHistory<double> cpuHistory_,ramHistory_,rxHistory_,txHistory_,temperatureHistory_,fanHistory_;
     double aggregateRxRate_{}; double aggregateTxRate_{}; double temperature_{-273.15}; QString temperatureSource_;
-    int pollIntervalMs_{1000}; int graphFps_{30}; QString yScaleMode_{"Auto"}; bool paused_{false};
+    int pollIntervalMs_{1000}; int graphFps_{30}; double graphYScale_{1.0}; QString yScaleMode_{"Auto"}; bool paused_{false};
 };
 
 } // namespace monesys

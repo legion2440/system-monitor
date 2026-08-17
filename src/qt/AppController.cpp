@@ -30,6 +30,7 @@ QString AppController::fanName() const{return QString::fromStdString(snapshot_.f
 
 void AppController::setPollIntervalMs(int milliseconds){ static constexpr int allowed[]={250,500,1000,2000,5000}; const auto closest=*std::min_element(std::begin(allowed),std::end(allowed),[milliseconds](int l,int r){return std::abs(l-milliseconds)<std::abs(r-milliseconds);}); if(pollIntervalMs_==closest)return; pollIntervalMs_=closest; sampler_->setInterval(std::chrono::milliseconds(pollIntervalMs_)); emit pollIntervalChanged(); }
 void AppController::setGraphFps(int fps){ const int normalized=fps<=10?10:(fps<=30?30:60); if(graphFps_==normalized)return; graphFps_=normalized; emit graphFpsChanged(); }
+void AppController::setGraphYScale(double scale){ const double normalized=std::clamp(scale,0.5,2.0); if(std::abs(graphYScale_-normalized)<0.0001)return; graphYScale_=normalized; emit graphYScaleChanged(); }
 void AppController::setYScaleMode(const QString& mode){ const auto normalized=(mode=="Fixed"||mode=="Peak")?mode:QStringLiteral("Auto"); if(yScaleMode_==normalized)return; yScaleMode_=normalized; emit yScaleModeChanged(); }
 void AppController::setPaused(bool paused){ if(paused_==paused)return; paused_=paused; sampler_->setPaused(paused_); emit pausedChanged(); }
 
