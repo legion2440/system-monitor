@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "module_id": "core",
+  "purpose": "Platform-neutral metric types, provider contract, time-based history and sampling loop.",
+  "paths": [
+    {"path": "src/core/MetricTypes.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/core/MetricProvider.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/core/TimedHistory.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/core/SamplingController.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/core/SamplingController.cpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/platform/ProviderFactory.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/platform/ProviderFactory.cpp", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["src/core/MetricProvider.hpp", "src/core/MetricTypes.hpp"],
+  "validators": [],
+  "tests": ["tests/core_tests.cpp"],
+  "runtime_evidence": []
+}

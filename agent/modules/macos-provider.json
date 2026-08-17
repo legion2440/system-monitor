@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "module_id": "macos-provider",
+  "purpose": "macOS provider boundary; current implementation is a compile-time scaffold for later native telemetry.",
+  "paths": [
+    {"path": "src/platform/macos/MacMetricProvider.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/platform/macos/MacMetricProvider.cpp", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["src/core/MetricProvider.hpp"], "validators": [], "tests": [], "runtime_evidence": []
+}

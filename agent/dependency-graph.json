@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "edges": [
+    ["linux-provider", "core"],
+    ["windows-provider", "core"],
+    ["macos-provider", "core"],
+    ["qt-bridge", "core"],
+    ["qt-bridge", "linux-provider"],
+    ["qt-bridge", "windows-provider"],
+    ["qt-bridge", "macos-provider"],
+    ["ui", "qt-bridge"],
+    ["verification", "core"],
+    ["verification", "linux-provider"]
+  ]
+}

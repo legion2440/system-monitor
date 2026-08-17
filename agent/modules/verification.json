@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "module_id": "verification",
+  "purpose": "Repository contracts, lightweight tests and audit/architecture documentation.",
+  "paths": [
+    {"path": "tests/core_tests.cpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "scripts/validate_agent_contracts.py", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "docs/architecture.md", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "docs/audit.md", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["agent/module-index.json", "agent/dependency-graph.json"],
+  "validators": ["scripts/validate_agent_contracts.py"],
+  "tests": ["tests/core_tests.cpp"],
+  "runtime_evidence": []
+}

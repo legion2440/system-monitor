@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "module_id": "ui",
+  "purpose": "Qt Quick/QML product UI implementing the MoneSys design language and audit-required graph controls.",
+  "paths": [
+    {"path": "ui/Main.qml", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "ui/Theme.qml", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "ui/Utils.js", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "ui/components/", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "ui/screens/", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["src/qt/AppController.hpp"], "validators": [], "tests": [], "runtime_evidence": []
+}

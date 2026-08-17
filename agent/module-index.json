@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "modules": {
+    "core": {"status": "implemented", "roots": ["src/core/"], "entrypoints": ["src/core/MetricProvider.hpp", "src/core/SamplingController.hpp"], "manifest": "agent/modules/core.json", "dependencies": []},
+    "linux-provider": {"status": "implemented", "roots": ["src/platform/linux/"], "entrypoints": ["src/platform/linux/LinuxMetricProvider.hpp"], "manifest": "agent/modules/linux-provider.json", "dependencies": ["core"]},
+    "windows-provider": {"status": "implemented", "roots": ["src/platform/windows/"], "entrypoints": ["src/platform/windows/WindowsMetricProvider.hpp"], "manifest": "agent/modules/windows-provider.json", "dependencies": ["core"]},
+    "macos-provider": {"status": "implemented", "roots": ["src/platform/macos/"], "entrypoints": ["src/platform/macos/MacMetricProvider.hpp"], "manifest": "agent/modules/macos-provider.json", "dependencies": ["core"]},
+    "qt-bridge": {"status": "implemented", "roots": ["src/qt/"], "entrypoints": ["src/qt/AppController.hpp"], "manifest": "agent/modules/qt-bridge.json", "dependencies": ["core", "linux-provider", "windows-provider", "macos-provider"]},
+    "ui": {"status": "implemented", "roots": ["ui/"], "entrypoints": ["ui/Main.qml"], "manifest": "agent/modules/ui.json", "dependencies": ["qt-bridge"]},
+    "verification": {"status": "implemented", "roots": ["tests/", "scripts/", "docs/"], "entrypoints": ["tests/core_tests.cpp", "scripts/validate_agent_contracts.py", "docs/audit.md"], "manifest": "agent/modules/verification.json", "dependencies": ["core", "linux-provider"]}
+  }
+}

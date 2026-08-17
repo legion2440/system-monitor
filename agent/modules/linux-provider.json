@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "module_id": "linux-provider",
+  "purpose": "Linux metric acquisition from procfs, sysfs, hwmon and native system calls.",
+  "paths": [
+    {"path": "src/platform/linux/LinuxMetricProvider.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/platform/linux/LinuxMetricProvider.cpp", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["src/core/MetricProvider.hpp"], "validators": [], "tests": [], "runtime_evidence": []
+}

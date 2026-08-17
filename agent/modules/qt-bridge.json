@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "module_id": "qt-bridge",
+  "purpose": "Translate normalized C++ snapshots into Qt properties and persistent QAbstractItemModel-derived models.",
+  "paths": [
+    {"path": "src/qt/AppController.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/AppController.cpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/ProcessModel.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/ProcessModel.cpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/NetworkModel.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/NetworkModel.cpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/SensorModel.hpp", "lifecycle": "implemented", "provenance": "authored"},
+    {"path": "src/qt/SensorModel.cpp", "lifecycle": "implemented", "provenance": "authored"}
+  ],
+  "contracts": ["src/core/MetricTypes.hpp"], "validators": [], "tests": [], "runtime_evidence": []
+}
