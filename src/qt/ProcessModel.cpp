@@ -1,6 +1,7 @@
 #include "qt/ProcessModel.hpp"
 
 #include <algorithm>
+#include <utility>
 
 namespace monesys {
 
@@ -14,10 +15,11 @@ QVariant ProcessModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(visible_.size())) return {};
     const auto& process = all_[static_cast<std::size_t>(visible_[static_cast<std::size_t>(index.row())])];
     switch (role) {
-    case PidRole: return process.pid;
-    case ParentPidRole: return process.parentPid;
+    case PidRole: return QVariant::fromValue<qlonglong>(static_cast<qlonglong>(process.pid));
+    case ParentPidRole: return QVariant::fromValue<qlonglong>(static_cast<qlonglong>(process.parentPid));
     case NameRole: return QString::fromStdString(process.name);
     case CommandLineRole: return QString::fromStdString(process.commandLine);
+    case StateCodeRole: return QString::fromStdString(process.stateCode);
     case StateRole: return QString::fromStdString(process.state);
     case UserRole: return QString::fromStdString(process.user);
     case CgroupRole: return QString::fromStdString(process.cgroup);
@@ -40,7 +42,7 @@ QVariant ProcessModel::data(const QModelIndex& index, int role) const {
 
 QHash<int, QByteArray> ProcessModel::roleNames() const {
     return {{PidRole,"pid"},{ParentPidRole,"parentPid"},{NameRole,"name"},{CommandLineRole,"commandLine"},
-            {StateRole,"state"},{UserRole,"user"},{CgroupRole,"cgroup"},{CpuRole,"cpu"},{MemoryRole,"memory"},
+            {StateCodeRole,"stateCode"},{StateRole,"state"},{UserRole,"user"},{CgroupRole,"cgroup"},{CpuRole,"cpu"},{MemoryRole,"memory"},
             {RssRole,"rss"},{VirtualRole,"virtualMemory"},{ReadRole,"readBytes"},{WriteRole,"writeBytes"},
             {ThreadsRole,"threads"},{SelectedRole,"selected"},{DepthRole,"depth"}};
 }
@@ -70,9 +72,14 @@ QVariantMap ProcessModel::selectedProcess() const {
     const auto pid = *selectedPids_.constBegin();
     const auto it = std::find_if(all_.begin(), all_.end(), [pid](const ProcessInfo& process) { return process.pid == pid; });
     if (it == all_.end()) return {};
-    return {{"pid",it->pid},{"parentPid",it->parentPid},{"name",QString::fromStdString(it->name)},
-            {"commandLine",QString::fromStdString(it->commandLine)},{"state",QString::fromStdString(it->state)},
-            {"user",QString::fromStdString(it->user)},{"cgroup",QString::fromStdString(it->cgroup)},
+    return {{"pid",QVariant::fromValue<qlonglong>(static_cast<qlonglong>(it->pid))},
+            {"parentPid",QVariant::fromValue<qlonglong>(static_cast<qlonglong>(it->parentPid))},
+            {"name",QString::fromStdString(it->name)},
+            {"commandLine",QString::fromStdString(it->commandLine)},
+            {"stateCode",QString::fromStdString(it->stateCode)},
+            {"state",QString::fromStdString(it->state)},
+            {"user",QString::fromStdString(it->user)},
+            {"cgroup",QString::fromStdString(it->cgroup)},
             {"cpu",it->cpuPercent},{"memory",it->memoryPercent},{"rss",QVariant::fromValue<qulonglong>(it->rssBytes)},
             {"virtualMemory",QVariant::fromValue<qulonglong>(it->virtualBytes)},
             {"readBytes",QVariant::fromValue<qulonglong>(it->readBytes)},

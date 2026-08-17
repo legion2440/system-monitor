@@ -46,7 +46,8 @@ std::string readFirstLine(const fs::path& path) {
 }
 
 bool isPidDirectory(const fs::directory_entry& entry) {
-    if (!entry.is_directory()) return false;
+    std::error_code ec;
+    if (!entry.is_directory(ec) || ec) return false;
     const auto name = entry.path().filename().string();
     return !name.empty() && std::all_of(name.begin(), name.end(), [](unsigned char c) { return std::isdigit(c) != 0; });
 }
@@ -105,6 +106,14 @@ bool rootHasPrefix(const fs::path& root, std::string_view prefix) {
     return false;
 }
 
+std::string linuxDisplayName(const std::string& distribution) {
+    if (distribution.empty()) return "Linux";
+    std::string lower = distribution;
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    if (lower.find("linux") != std::string::npos) return distribution;
+    return "Linux · " + distribution;
+}
+
 } // namespace
 
 LinuxMetricProvider::LinuxMetricProvider() {
@@ -149,8 +158,8 @@ std::string LinuxMetricProvider::readOsName() {
         if (key == "PRETTY_NAME") pretty = value;
         else if (key == "NAME") name = value;
     }
-    if (!pretty.empty()) return pretty;
-    if (!name.empty()) return name;
+    if (!pretty.empty()) return linuxDisplayName(pretty);
+    if (!name.empty()) return linuxDisplayName(name);
     return "Linux";
 }
 
@@ -249,8 +258,8 @@ MemoryStats LinuxMetricProvider::readMemoryAndDisk() {
     struct statvfs fsStats {};
     if (::statvfs("/", &fsStats) == 0) {
         stats.diskTotalBytes = static_cast<std::uint64_t>(fsStats.f_blocks) * fsStats.f_frsize;
-        const auto availableBytes = static_cast<std::uint64_t>(fsStats.f_bavail) * fsStats.f_frsize;
-        stats.diskUsedBytes = stats.diskTotalBytes >= availableBytes ? stats.diskTotalBytes - availableBytes : 0;
+        const auto freeBytes = static_cast<std::uint64_t>(fsStats.f_bfree) * fsStats.f_frsize;
+        stats.diskUsedBytes = stats.diskTotalBytes >= freeBytes ? stats.diskTotalBytes - freeBytes : 0;
     }
     return stats;
 }
@@ -275,6 +284,7 @@ std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalC
         while (fieldsStream >> field) fields.push_back(field);
         if (fields.size() < 22) continue;
         const char state = fields[0].empty() ? '?' : fields[0][0];
+        process.stateCode = std::string(1, state);
         process.state = processStateName(state);
         process.parentPid = parseSigned(fields[1]);
         const auto processTicks = parseUnsigned(fields[11]) + parseUnsigned(fields[12]);

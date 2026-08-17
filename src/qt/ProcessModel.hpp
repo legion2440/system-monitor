@@ -18,7 +18,7 @@ class ProcessModel final : public QAbstractListModel {
 
 public:
     enum Role {
-        PidRole = Qt::UserRole + 1, ParentPidRole, NameRole, CommandLineRole, StateRole, UserRole, CgroupRole,
+        PidRole = Qt::UserRole + 1, ParentPidRole, NameRole, CommandLineRole, StateCodeRole, StateRole, UserRole, CgroupRole,
         CpuRole, MemoryRole, RssRole, VirtualRole, ReadRole, WriteRole, ThreadsRole, SelectedRole, DepthRole
     };
 

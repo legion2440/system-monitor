@@ -80,6 +80,7 @@ struct ProcessInfo {
     std::int64_t parentPid{};
     std::string name;
     std::string commandLine;
+    std::string stateCode;
     std::string state;
     std::string user;
     std::string cgroup;
