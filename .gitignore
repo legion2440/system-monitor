@@ -1,0 +1,30 @@
+# Build output
+build/
+cmake-build-*/
+out/
+
+# Qt Creator / IDE
+CMakeLists.txt.user*
+.qtcreator/
+.vscode/
+.idea/
+
+# Compilers and tooling
+compile_commands.json
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Runtime / local state
+*.log
+.DS_Store
+Thumbs.db
+
+# Python validator caches
+__pycache__/
+*.py[cod]
