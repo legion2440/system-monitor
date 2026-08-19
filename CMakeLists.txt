@@ -67,7 +67,9 @@ qt_add_executable(monesys src/main.cpp)
 qt_add_qml_module(monesys
     URI MoneSys
     VERSION 1.0
-    RESOURCE_PREFIX "/qt/qml"
+    # Qt 6.4 does not include :/qt/qml in its default import path. Use the
+    # legacy Qt resource import root which is available on 6.4 and newer.
+    RESOURCE_PREFIX "/qt-project.org/imports"
     QML_FILES
         ui/Main.qml
         ui/Theme.qml

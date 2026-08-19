@@ -16,18 +16,13 @@ int main(int argc, char* argv[]) {
 
     monesys::AppController controller;
     QQmlApplicationEngine engine;
-
-    // Qt 6.5+ includes qrc:/qt/qml in the default QML import path via
-    // QTP0001. Qt 6.4 does not, so add it explicitly for our minimum
-    // supported version while keeping the modern resource layout.
-    engine.addImportPath(QStringLiteral("qrc:/qt/qml"));
     engine.rootContext()->setContextProperty(QStringLiteral("app"), &controller);
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] {
         QCoreApplication::exit(EXIT_FAILURE);
     }, Qt::QueuedConnection);
 
-    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/MoneSys/Main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/qt-project.org/imports/MoneSys/Main.qml")));
     controller.start();
     return app.exec();
 }
