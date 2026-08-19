@@ -81,7 +81,10 @@ qt_add_qml_module(monesys
         ui/screens/UnavailableScreen.qml
 )
 target_link_libraries(monesys PRIVATE monesys_qt Qt6::Quick Qt6::QuickControls2)
-set_target_properties(monesys PROPERTIES OUTPUT_NAME monesys)
+set_target_properties(monesys PROPERTIES
+    OUTPUT_NAME monesys
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
 if(MONESYS_BUILD_AUDIT_ALIAS)
     add_custom_command(TARGET monesys POST_BUILD
