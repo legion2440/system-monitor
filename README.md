@@ -143,14 +143,14 @@ The raw tables preserve the audit fields for Receive and Transmit. Absolute coun
 
 ### Thermal and fan
 
-MoneSys reads:
+MoneSys uses generic Linux sensor interfaces:
 
 - `/sys/class/thermal/thermal_zone*/temp`;
 - `/sys/class/hwmon/hwmon*/temp*_input`;
 - hwmon `fan*_input`;
 - optional `pwm*` for fan level.
 
-If generic Linux sensor interfaces expose nothing, `/proc/acpi/ibm/thermal` is also supported as a compatibility fallback for the historical audit environment.
+Hwmon chip and sensor-label metadata are kept separately. The primary CPU temperature is chosen by an ordered preference (`Tdie`, `Tctl`, package/core labels, then known CPU hwmon chips such as `k10temp`, `coretemp` or `zenpower`) instead of depending on filesystem enumeration order. Invalid zero, negative or implausibly high temperature inputs are ignored.
 
 If hardware does not expose a sensor or fan to the kernel, the UI reports it as unavailable instead of inventing a zero value.
 
@@ -166,7 +166,7 @@ Current screens include:
 - **Disks** — root-filesystem `df`-compatible usage and availability;
 - **Network** — RX/TX histories, complete kernel counter tables and per-interface visual usage;
 - **Processes** — filter, multi-selection, hierarchy indentation and process inspector;
-- **Sensors** — available thermal sources and kernel paths;
+- **Sensors** — available thermal sources, chip/label metadata and kernel paths;
 - **Settings** — polling interval, graph FPS, Y-scale, graph freeze and collection state.
 
 ## ⚙️ Sampling and graphs
@@ -272,7 +272,7 @@ system-monitor/
 - CPU and process values are delta-based. The first sample may legitimately be zero until a second kernel snapshot exists.
 - Process files can disappear while `/proc` is being scanned; short-lived processes are skipped rather than treated as fatal errors.
 - Sensor availability depends on kernel drivers, permissions, virtualization and hardware exposure.
-- The historical audit may reference utilities or paths absent on modern Linux; MoneSys reads the generic kernel interfaces directly and carries a ThinkPad thermal compatibility fallback.
+- The historical audit may reference utilities or vendor-specific paths absent on modern Linux; MoneSys intentionally uses generic kernel interfaces.
 - The design handoff is a visual specification. The HTML reference and landing page are not part of the application runtime.
 
 ## 🧑‍💻 Author
