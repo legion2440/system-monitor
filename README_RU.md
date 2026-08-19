@@ -134,14 +134,16 @@ IPv4 берётся через `getifaddrs()`, полные RX/TX counters — �
 
 ### Температура и вентилятор
 
-Используются:
+Используются только generic Linux interfaces:
 
 - `/sys/class/thermal/thermal_zone*/temp`;
 - `/sys/class/hwmon/hwmon*/temp*_input`;
 - hwmon `fan*_input`;
 - optional `pwm*`.
 
-Если generic sensors ничего не отдали, есть fallback на `/proc/acpi/ibm/thermal` для старого audit environment.
+Имя hwmon-чипа и label конкретного сенсора хранятся отдельно. Основная температура CPU выбирается по приоритету: `Tdie`, затем `Tctl`, package/core labels, затем известные CPU hwmon chips (`k10temp`, `coretemp`, `zenpower`) и только потом общие CPU-названия. Выбор больше не зависит от случайного порядка обхода каталогов. Нулевые, отрицательные и явно нереалистичные температурные значения игнорируются.
+
+Если железо не отдаёт sensor или fan через ядро, UI показывает `Unavailable`, а не подставляет ноль.
 
 ## 🖥️ Интерфейс
 
@@ -153,7 +155,7 @@ IPv4 берётся через `getifaddrs()`, полные RX/TX counters — �
 - **Disks** — root filesystem в семантике `df`;
 - **Network** — RX/TX history, полные kernel counter tables и visual usage;
 - **Processes** — filter, multi-select, hierarchy, inspector;
-- **Sensors** — доступные температурные источники;
+- **Sensors** — доступные температурные источники, chip/label и kernel path;
 - **Settings** — polling, graph FPS, Y-scale, freeze графиков и состояние collector.
 
 ## ⚙️ Опрос и графики
@@ -248,6 +250,7 @@ system-monitor/
 - Первый CPU/process sample может быть нулевым, потому что значения считаются по дельтам.
 - Короткоживущие процессы могут исчезать во время чтения `/proc` и безопасно пропускаются.
 - Sensors зависят от kernel drivers, permissions, virtualization и hardware exposure.
+- Старый audit может ссылаться на утилиты или vendor-specific пути, отсутствующие в современном Linux; MoneSys намеренно использует generic kernel interfaces.
 - HTML design handoff и landing page не входят в runtime приложения.
 
 ## 🧑‍💻 Автор
