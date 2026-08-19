@@ -47,10 +47,12 @@ set_source_files_properties(ui/components/MetricCard.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(ui/components/HistoryGraph.qml PROPERTIES QT_RESOURCE_ALIAS components/HistoryGraph.qml)
 set_source_files_properties(ui/components/GraphControls.qml PROPERTIES QT_RESOURCE_ALIAS components/GraphControls.qml)
 set_source_files_properties(ui/components/CoreTile.qml PROPERTIES QT_RESOURCE_ALIAS components/CoreTile.qml)
+set_source_files_properties(ui/components/CpuThreadTile.qml PROPERTIES QT_RESOURCE_ALIAS components/CpuThreadTile.qml)
 set_source_files_properties(ui/components/SidebarItem.qml PROPERTIES QT_RESOURCE_ALIAS components/SidebarItem.qml)
 set_source_files_properties(ui/screens/OverviewScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/OverviewScreen.qml)
 set_source_files_properties(ui/screens/CpuScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/CpuScreen.qml)
 set_source_files_properties(ui/screens/MemoryScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/MemoryScreen.qml)
+set_source_files_properties(ui/screens/DiskScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/DiskScreen.qml)
 set_source_files_properties(ui/screens/NetworkScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/NetworkScreen.qml)
 set_source_files_properties(ui/screens/ProcessesScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/ProcessesScreen.qml)
 set_source_files_properties(ui/screens/SensorsScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/SensorsScreen.qml)
@@ -78,10 +80,12 @@ qt_add_qml_module(monesys
         ui/components/HistoryGraph.qml
         ui/components/GraphControls.qml
         ui/components/CoreTile.qml
+        ui/components/CpuThreadTile.qml
         ui/components/SidebarItem.qml
         ui/screens/OverviewScreen.qml
         ui/screens/CpuScreen.qml
         ui/screens/MemoryScreen.qml
+        ui/screens/DiskScreen.qml
         ui/screens/NetworkScreen.qml
         ui/screens/ProcessesScreen.qml
         ui/screens/SensorsScreen.qml
