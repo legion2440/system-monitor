@@ -35,7 +35,7 @@ ColumnLayout {
 
         Column {
             Text { text: qsTr("Graph FPS"); color: Theme.textSecond; font.pixelSize: 12 }
-            Text { text: qsTr("Render cadence only; it does not change metric history length."); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
+            Text { text: qsTr("Animation cadence only; metric collection remains independent."); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
         }
         ComboBox {
             model: [10, 30, 60]
@@ -54,13 +54,23 @@ ColumnLayout {
         }
 
         Column {
-            Text { text: qsTr("Collection state"); color: Theme.textSecond; font.pixelSize: 12 }
-            Text { text: qsTr("Pause keeps the 60 s history buffer intact."); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
+            Text { text: qsTr("Graph animation"); color: Theme.textSecond; font.pixelSize: 12 }
+            Text { text: qsTr("Freezes the curves only. Telemetry, tables and counters keep updating."); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
         }
         Switch {
-            text: app.paused ? qsTr("Paused") : qsTr("Live")
+            text: app.paused ? qsTr("Frozen") : qsTr("Animating")
             checked: !app.paused
             onToggled: app.paused = !checked
+        }
+
+        Column {
+            Text { text: qsTr("Metric collection"); color: Theme.textSecond; font.pixelSize: 12 }
+            Text { text: qsTr("Stops the sampler entirely. Existing history remains intact."); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
+        }
+        Switch {
+            text: app.collecting ? qsTr("Live") : qsTr("Stopped")
+            checked: app.collecting
+            onToggled: app.collecting = checked
         }
     }
 

@@ -45,12 +45,20 @@ ApplicationWindow {
                     width: 5
                     height: 5
                     radius: 3
-                    color: app.paused ? Theme.textFaint : Theme.accent
-                    opacity: app.paused ? 0.45 : 1.0
+                    color: app.collecting ? Theme.accent : Theme.textFaint
+                    opacity: app.collecting ? 1.0 : 0.45
                 }
                 Text {
-                    text: app.paused ? qsTr("PAUSED") : qsTr("LIVE")
-                    color: app.paused ? Theme.textFaint : Theme.accent
+                    text: app.collecting ? qsTr("LIVE") : qsTr("STOPPED")
+                    color: app.collecting ? Theme.accent : Theme.textFaint
+                    font.family: Theme.monoFont
+                    font.pixelSize: 9
+                    font.letterSpacing: 1.1
+                }
+                Text {
+                    visible: app.paused
+                    text: qsTr("GRAPHS FROZEN")
+                    color: Theme.textFaint
                     font.family: Theme.monoFont
                     font.pixelSize: 9
                     font.letterSpacing: 1.1
@@ -100,7 +108,7 @@ ApplicationWindow {
                     SidebarItem { Layout.fillWidth: true; label: "CPU"; metric: Utils.ghz(app.cpuFrequencyMHz); active: window.section === 1; onClicked: window.section = 1 }
                     SidebarItem { Layout.fillWidth: true; label: "GPU"; metric: "—"; active: window.section === 2; onClicked: window.section = 2 }
                     SidebarItem { Layout.fillWidth: true; label: qsTr("Memory"); metric: app.ramTotal > 0 ? (app.ramUsed * 100 / app.ramTotal).toFixed(0) + "%" : "—"; active: window.section === 3; onClicked: window.section = 3 }
-                    SidebarItem { Layout.fillWidth: true; label: qsTr("Disks"); metric: app.diskTotal > 0 ? (app.diskUsed * 100 / app.diskTotal).toFixed(0) + "%" : "—"; active: window.section === 4; onClicked: window.section = 4 }
+                    SidebarItem { Layout.fillWidth: true; label: qsTr("Disks"); metric: app.diskTotal > 0 ? Math.ceil(Number(app.diskUsagePercent)) + "%" : "—"; active: window.section === 4; onClicked: window.section = 4 }
                     SidebarItem { Layout.fillWidth: true; label: qsTr("Network"); metric: Utils.rate(app.aggregateRxRate); active: window.section === 5; onClicked: window.section = 5 }
                     SidebarItem { Layout.fillWidth: true; label: qsTr("Processes"); metric: app.taskTotal.toString(); active: window.section === 6; onClicked: window.section = 6 }
                     SidebarItem { Layout.fillWidth: true; label: qsTr("Sensors"); metric: app.thermalAvailable ? Number(app.temperature).toFixed(0) + "°" : "—"; active: window.section === 7; onClicked: window.section = 7 }

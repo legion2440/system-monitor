@@ -11,53 +11,87 @@ Canvas {
     property real scaleMultiplier: 1.0
     property int fps: 30
     property bool paused: false
+    property int animMs: 320
     property real currentMin: 0
     property real currentMax: fixedMax
-    property bool paintPending: false
+    property var renderSamples: []
+    property real blend: 1.0
 
     antialiasing: true
 
-    function schedulePaint() {
-        paintPending = true
-        if (!paintTimer.running)
-            paintTimer.start()
+    function frameInterval() { return Math.max(8, Math.round(1000 / Math.max(1, fps))) }
+
+    onSamplesChanged: {
+        if (paused)
+            return
+        renderSamples = samples
+        if (!visible) {
+            animTimer.stop()
+            blend = 1
+            return
+        }
+        blend = 0
+        animTimer.restart()
+        requestPaint()
     }
 
-    onSamplesChanged: schedulePaint()
-    onScaleModeChanged: schedulePaint()
-    onScaleMultiplierChanged: schedulePaint()
-    onFixedMaxChanged: schedulePaint()
-    onLineColorChanged: schedulePaint()
-    onFillColorChanged: schedulePaint()
-    onWidthChanged: schedulePaint()
-    onHeightChanged: schedulePaint()
-    onFpsChanged: schedulePaint()
-    Component.onCompleted: schedulePaint()
+    onPausedChanged: {
+        if (paused) {
+            animTimer.stop()
+            blend = 1
+            requestPaint()
+        } else {
+            renderSamples = samples
+            blend = 1
+            requestPaint()
+        }
+    }
+
+    onVisibleChanged: {
+        if (!visible) {
+            animTimer.stop()
+            blend = 1
+        } else {
+            renderSamples = samples
+            blend = 1
+            requestPaint()
+        }
+    }
+
+    onScaleModeChanged: requestPaint()
+    onScaleMultiplierChanged: requestPaint()
+    onFixedMaxChanged: requestPaint()
+    onLineColorChanged: requestPaint()
+    onFillColorChanged: requestPaint()
+    onWidthChanged: requestPaint()
+    onHeightChanged: requestPaint()
+    Component.onCompleted: { renderSamples = samples; blend = 1; requestPaint() }
 
     Timer {
-        id: paintTimer
-        interval: Math.max(16, Math.round(1000 / Math.max(1, graph.fps)))
-        repeat: false
+        id: animTimer
+        repeat: true
+        interval: graph.frameInterval()
         onTriggered: {
-            if (!graph.paintPending)
-                return
-            graph.paintPending = false
+            graph.blend = Math.min(1, graph.blend + interval / Math.max(1, graph.animMs))
             graph.requestPaint()
+            if (graph.blend >= 1)
+                stop()
         }
     }
 
     onPaint: {
         const ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)
-        if (!samples || samples.length === 0 || width <= 1 || height <= 1)
+        const data = renderSamples
+        if (!data || data.length === 0 || width <= 1 || height <= 1)
             return
 
         let minValue = 0
         let maxValue = fixedMax
-        let rawMin = Number(samples[0])
+        let rawMin = Number(data[0])
         let rawMax = rawMin
-        for (let i = 1; i < samples.length; ++i) {
-            const v = Number(samples[i])
+        for (let i = 1; i < data.length; ++i) {
+            const v = Number(data[i])
             rawMin = Math.min(rawMin, v)
             rawMax = Math.max(rawMax, v)
         }
@@ -77,11 +111,13 @@ Canvas {
         currentMax = maxValue
 
         const span = Math.max(0.0001, maxValue - minValue)
-        const step = samples.length > 1 ? width / (samples.length - 1) : width
+        const step = data.length > 1 ? width / (data.length - 1) : width
+        const offset = (1 - Math.max(0, Math.min(1, blend))) * step
+
         ctx.beginPath()
-        for (let i = 0; i < samples.length; ++i) {
-            const x = i * step
-            const normalized = Math.max(0, Math.min(1, (Number(samples[i]) - minValue) / span))
+        for (let i = 0; i < data.length; ++i) {
+            const x = i * step + offset
+            const normalized = Math.max(0, Math.min(1, (Number(data[i]) - minValue) / span))
             const y = height - normalized * height
             if (i === 0)
                 ctx.moveTo(x, y)
@@ -92,8 +128,8 @@ Canvas {
         ctx.lineWidth = 1.5
         ctx.strokeStyle = lineColor
         ctx.stroke()
-        ctx.lineTo(width, height)
-        ctx.lineTo(0, height)
+        ctx.lineTo(width + offset, height)
+        ctx.lineTo(offset, height)
         ctx.closePath()
 
         const gradient = ctx.createLinearGradient(0, 0, 0, height)

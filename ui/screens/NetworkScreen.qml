@@ -40,6 +40,7 @@ ColumnLayout {
                 samples: app.rxHistory
                 fixedMax: 104857600
                 scaleMode: app.yScaleMode
+                scaleMultiplier: app.graphYScale
                 fps: app.graphFps
                 paused: app.paused
             }
@@ -59,6 +60,7 @@ ColumnLayout {
                 samples: app.txHistory
                 fixedMax: 104857600
                 scaleMode: app.yScaleMode
+                scaleMultiplier: app.graphYScale
                 fps: app.graphFps
                 paused: app.paused
                 lineColor: Theme.neutralRamp[3]
@@ -155,7 +157,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        Text { text: qsTr("VISUAL USAGE · 0 → 2 GiB"); color: Theme.textFaint; font.pixelSize: 9; font.letterSpacing: 1.2 }
+        Text { text: qsTr("VISUAL USAGE · 0 → 2 GiB SINCE START · TOTALS ARE ABSOLUTE"); color: Theme.textFaint; font.pixelSize: 9; font.letterSpacing: 1.2 }
         Item { Layout.fillWidth: true }
         TabBar {
             id: usageTabs
@@ -187,9 +189,10 @@ ColumnLayout {
                     RowLayout {
                         Layout.fillWidth: true
                         Text { text: name + (ipv4 ? " · " + ipv4 : ""); color: Theme.textBright; font.pixelSize: 11; Layout.fillWidth: true }
-                        Text { text: Utils.bytes(rxBytes); color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }
+                        Text { text: Utils.bytes(rxBytes) + "  (" + rxBytes + " B)"; color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }
                     }
-                    ProgressBar { Layout.fillWidth: true; from: 0; to: 2147483648; value: Math.min(2147483648, rxBytes) }
+                    ProgressBar { Layout.fillWidth: true; from: 0; to: 2147483648; value: Math.min(2147483648, rxSession) }
+                    Text { text: qsTr("session ") + Utils.bytes(rxSession) + " / 2.00 GB"; color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
                 }
             }
         }
@@ -211,9 +214,10 @@ ColumnLayout {
                     RowLayout {
                         Layout.fillWidth: true
                         Text { text: name + (ipv4 ? " · " + ipv4 : ""); color: Theme.textBright; font.pixelSize: 11; Layout.fillWidth: true }
-                        Text { text: Utils.bytes(txBytes); color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }
+                        Text { text: Utils.bytes(txBytes) + "  (" + txBytes + " B)"; color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }
                     }
-                    ProgressBar { Layout.fillWidth: true; from: 0; to: 2147483648; value: Math.min(2147483648, txBytes) }
+                    ProgressBar { Layout.fillWidth: true; from: 0; to: 2147483648; value: Math.min(2147483648, txSession) }
+                    Text { text: qsTr("session ") + Utils.bytes(txSession) + " / 2.00 GB"; color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
                 }
             }
         }

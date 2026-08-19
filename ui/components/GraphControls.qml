@@ -16,9 +16,10 @@ Rectangle {
         anchors.rightMargin: 10
         spacing: 8
 
-        Button {
-            text: app.paused ? qsTr("Resume") : qsTr("Pause")
-            onClicked: app.paused = !app.paused
+        CheckBox {
+            text: app.paused ? qsTr("Animation off") : qsTr("Animation on")
+            checked: !app.paused
+            onToggled: app.paused = !checked
         }
 
         Text { text: qsTr("FPS") + " " + app.graphFps; color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }

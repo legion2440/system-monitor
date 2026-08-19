@@ -46,7 +46,6 @@ set_source_files_properties(ui/Utils.js PROPERTIES QT_RESOURCE_ALIAS Utils.js)
 set_source_files_properties(ui/components/MetricCard.qml PROPERTIES QT_RESOURCE_ALIAS components/MetricCard.qml)
 set_source_files_properties(ui/components/HistoryGraph.qml PROPERTIES QT_RESOURCE_ALIAS components/HistoryGraph.qml)
 set_source_files_properties(ui/components/GraphControls.qml PROPERTIES QT_RESOURCE_ALIAS components/GraphControls.qml)
-set_source_files_properties(ui/components/CoreTile.qml PROPERTIES QT_RESOURCE_ALIAS components/CoreTile.qml)
 set_source_files_properties(ui/components/CpuThreadTile.qml PROPERTIES QT_RESOURCE_ALIAS components/CpuThreadTile.qml)
 set_source_files_properties(ui/components/SidebarItem.qml PROPERTIES QT_RESOURCE_ALIAS components/SidebarItem.qml)
 set_source_files_properties(ui/screens/OverviewScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/OverviewScreen.qml)
@@ -79,7 +78,6 @@ qt_add_qml_module(monesys
         ui/components/MetricCard.qml
         ui/components/HistoryGraph.qml
         ui/components/GraphControls.qml
-        ui/components/CoreTile.qml
         ui/components/CpuThreadTile.qml
         ui/components/SidebarItem.qml
         ui/screens/OverviewScreen.qml

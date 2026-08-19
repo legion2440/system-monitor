@@ -1,8 +1,8 @@
 # MoneSys
 
-Современный кроссплатформенный монитор системы и процессов на C++20. MoneSys использует нативный интерфейс Qt 6 Quick/QML, платформонезависимое ядро метрик и отдельные провайдеры ОС, поэтому Linux, Windows и macOS могут использовать один UI и одну семантику данных без привязки сбора телеметрии к Qt.
+Современный кроссплатформенный монитор системы и процессов на C++20. MoneSys использует Qt 6 Quick/QML, платформонезависимое ядро метрик и отдельные провайдеры ОС, поэтому Linux, Windows и macOS могут использовать один UI и одну семантику данных без привязки сбора телеметрии к Qt.
 
-Текущий этап полностью реализует Linux-backend для задания 01-edu `system-monitor` и одновременно оставляет готовые границы для будущих нативных провайдеров Windows и macOS.
+Текущий этап реализует Linux-backend для задания 01-edu `system-monitor` и одновременно оставляет готовые границы для будущих нативных провайдеров Windows и macOS.
 
 · [English version](README.md)
 
@@ -25,13 +25,17 @@
 
 ### Требования
 
-- Linux для текущего полностью реализованного backend
+- Linux для текущего полного backend
 - компилятор с C++20
 - CMake 3.21 или новее
-- Qt 6.5 или новее с Qt Quick и Qt Quick Controls 2
+- Qt 6.4 или новее с Qt Quick и Qt Quick Controls 2
 - Ninja рекомендуется, но не обязателен
 
-Qt 6 development stack можно поставить пакетами своего дистрибутива или официальным Qt installer. Точные имена пакетов отличаются между дистрибутивами.
+На Ubuntu/Debian нужные пакеты ставятся скриптом:
+
+```bash
+./scripts/install-ubuntu-deps.sh
+```
 
 ### Сборка
 
@@ -43,13 +47,13 @@ cmake --build build
 ### Запуск
 
 ```bash
-./build/monesys
+./build/bin/monesys
 ```
 
-По умолчанию сборка также создаёт идентичный executable `monitor` для старого пункта аудита 01-edu, где предлагается найти процесс самого монитора:
+Для старого шага аудита также создаётся идентичный бинарник `monitor`:
 
 ```bash
-./build/monitor
+./build/bin/monitor
 ```
 
 Отключить alias:
@@ -58,15 +62,32 @@ cmake --build build
 cmake -S . -B build -DMONESYS_BUILD_AUDIT_ALIAS=OFF
 ```
 
+Если WSLg выбирает нерабочий Wayland socket:
+
+```bash
+QT_QPA_PLATFORM=xcb ./build/bin/monesys
+```
+
 ## 📝 О проекте
 
-MoneSys не является оболочкой над `top`, `free`, `df`, `ifconfig` или другими CLI-утилитами. Linux-provider читает интерфейсы ядра и системы напрямую и передаёт остальному приложению нормализованные C++ структуры метрик.
+MoneSys не является оболочкой над `top`, `free`, `df`, `ifconfig` и другими CLI-утилитами. Linux-provider читает интерфейсы ядра напрямую и отдаёт приложению нормализованные C++ структуры.
 
-Проект намеренно заменяет старый Dear ImGui из задания на нативный продуктовый интерфейс Qt Quick/QML, сохраняя поведение телеметрии, которое проверяет audit-list. Под интерфейсом это остаётся C++ проектом системного мониторинга.
+Проект намеренно заменяет старый Dear ImGui из задания на современный Qt Quick/QML UI, сохраняя функциональное поведение, которое проверяет audit-list.
 
-Первый этап включает системную информацию, CPU/per-core, RAM/SWAP/disk, процессы, IPv4 и RX/TX counters, live network rates, thermal/fan telemetry, 60 секунд истории и независимые polling/FPS/Y-scale controls.
+Первый этап включает:
 
-GPU, Energy, Services и Logs уже имеют UI/provider точки, но пока не заявляются как готовая телеметрия.
+- системную информацию и состояния процессов;
+- общую загрузку CPU и телеметрию по логическим процессорам;
+- RAM, SWAP и root filesystem;
+- process CPU/RAM/I/O/state/user;
+- фильтр и устойчивый multi-select процессов;
+- IPv4 и полные RX/TX kernel counters;
+- live network rates и адаптивные единицы;
+- thermal/hwmon fan telemetry при наличии;
+- 60 секунд истории;
+- независимые polling, FPS и Y-scale controls.
+
+GPU, Energy, Services и Logs имеют UI/provider точки, но пока не заявляются как готовая телеметрия.
 
 ## 🏗️ Архитектура
 
@@ -83,11 +104,7 @@ MetricProvider
   └── MacMetricProvider
 ```
 
-`src/core/` не содержит Qt headers. Платформенные providers возвращают обычные C++ snapshots. Только `src/qt/` превращает их в Qt properties/models для QML.
-
-Поэтому добавление Windows/macOS telemetry source не требует переписывать UI, историю графиков, представление процессов или общие контракты метрик.
-
-Подробнее: [`docs/architecture.md`](docs/architecture.md).
+`src/core/` не зависит от Qt. Платформенные providers возвращают обычные C++ snapshots, а `src/qt/` преобразует их в Qt properties/models для QML.
 
 ## 📊 Телеметрия Linux
 
@@ -95,71 +112,65 @@ MetricProvider
 
 Используются `/etc/os-release`, `gethostname()`, `/proc/cpuinfo`, `/proc/stat` и `/proc/<pid>/stat`.
 
-Общая загрузка CPU нормализована в `0..100%` для всей машины. Для процесса используется семантика `100% = одно логическое ядро`, поэтому многопоточный процесс может показывать больше `100%`.
+Общая загрузка CPU нормализована в `0..100%` для всей машины. Для процесса используется семантика `100% = один логический процессор`, поэтому многопоточный процесс может показывать больше `100%`.
 
 ### Память и диск
 
-- RAM/SWAP — `/proc/meminfo`;
-- корневая файловая система — `statvfs("/")`.
+RAM/SWAP читаются из `/proc/meminfo`. Used RAM считается как `MemTotal - MemAvailable`, что совпадает с современным procps.
 
-Использованная RAM считается как `MemTotal - MemAvailable`.
+Диск читается через `statvfs("/")`. `Size`, `Used` и `Avail` соответствуют `df`: `Used = f_blocks - f_bfree`, `Avail = f_bavail`, процент отображается с округлением вверх как у `df`.
 
 ### Процессы
 
-Модель собирает PID/PPID, имя, command line, state, CPU%, memory%, RSS/VIRT, read/write bytes, threads, user и cgroup.
+Собираются PID/PPID, имя, command line, state, CPU%, memory%, RSS/VIRT, read/write bytes, threads, user и cgroup.
 
-Selection хранится по PID, а не по номеру строки, поэтому фильтр и обычный refresh не переключают выделение на другой процесс. Можно выбирать несколько строк.
+Selection хранится по PID. При выделении или работе со списком вдали от верха порядок строк фиксируется, поэтому строки не прыгают под курсором на каждом poll.
 
 ### Сеть
 
-MoneSys объединяет `getifaddrs()` для IPv4 и `/proc/net/dev` для накопительных RX/TX counters. Скорость считается по дельтам счётчиков во времени.
+IPv4 берётся через `getifaddrs()`, полные RX/TX counters — из `/proc/net/dev`.
 
-Raw-таблицы сохраняют поля Receive/Transmit из audit-list. UI автоматически преобразует B/KB/MB/GB. Audit-визуализация использует диапазон `0..2 GiB`.
+Сырые значения остаются абсолютными и совпадают с kernel counters. Progress bar `0..2 GiB` показывает трафик с момента запуска MoneSys, чтобы движение было видно даже если интерфейс уже давно превысил 2 GiB. KB/MB/GB выводятся с двумя знаками после запятой.
 
 ### Температура и вентилятор
 
-Используются общие Linux интерфейсы:
+Используются:
 
 - `/sys/class/thermal/thermal_zone*/temp`;
 - `/sys/class/hwmon/hwmon*/temp*_input`;
 - hwmon `fan*_input`;
-- optional `pwm*` для уровня вентилятора.
+- optional `pwm*`.
 
-Если железо или драйвер не отдаёт sensor/fan, UI показывает `Unavailable`, а не выдуманный ноль.
+Если generic sensors ничего не отдали, есть fallback на `/proc/acpi/ibm/thermal` для старого audit environment.
 
 ## 🖥️ Интерфейс
 
-QML-интерфейс следует hi-fi дизайну MoneSys, а не старому скриншоту из задания.
-
 Текущие экраны:
 
-- **Overview** — CPU, память, tasks, disk, network, sensors и top processes;
-- **CPU** — вкладки CPU/Fan/Thermal, большой график и per-core tiles;
-- **Memory** — RAM, SWAP и disk usage;
-- **Network** — RX/TX history, полные kernel counter tables и визуализация интерфейсов;
-- **Processes** — filter, multi-select, hierarchy indentation и process inspector;
+- **Overview** — CPU, память, tasks, disk, network, sensors, top processes;
+- **CPU** — CPU/Fan/Thermal, большой график и logical-processor tiles;
+- **Memory** — RAM, SWAP и disk summary;
+- **Disks** — root filesystem в семантике `df`;
+- **Network** — RX/TX history, полные kernel counter tables и visual usage;
+- **Processes** — filter, multi-select, hierarchy, inspector;
 - **Sensors** — доступные температурные источники;
-- **Settings** — polling interval, graph FPS, Y-scale и collection state.
-
-QML использует layouts вместо буквального переноса абсолютных HTML-координат.
+- **Settings** — polling, graph FPS, Y-scale, freeze графиков и состояние collector.
 
 ## ⚙️ Опрос и графики
 
-В MoneSys разделены:
+Разделены три вещи:
 
 - **опрос метрик** — 250 мс / 500 мс / 1 с / 2 с / 5 с;
-- **окно истории** — 60 секунд реального времени;
-- **отрисовка графиков** — 10 / 30 / 60 FPS.
+- **окно истории** — 60 секунд;
+- **анимация графика** — 10 / 30 / 60 FPS только пока новый sample заезжает в график.
 
-Изменение FPS не заставляет систему собирать метрики 60 раз в секунду. Изменение polling interval не меняет длину history window.
+Между sample'ами animation timer не работает. Заморозка графика не останавливает процессы и network counters; полный collector можно остановить отдельно в Settings.
 
-CPU/Fan/Thermal содержат обязательные по заданию controls:
+CPU/Fan/Thermal содержат обязательные controls:
 
-- Pause/Resume;
-- выбор FPS;
-- Y-scale `Auto`, `Fixed`, `Peak`.
-
-Pause останавливает сбор новых метрик, но не очищает историю.
+- Animation on/off;
+- FPS slider;
+- Y-scale slider + `Auto`, `Fixed`, `Peak`.
 
 ## 🌐 Кроссплатформенность
 
@@ -170,14 +181,7 @@ src/platform/
 └── macos/
 ```
 
-Linux — первый полный provider. Windows и macOS сейчас являются явными compile-time scaffolds, а не фейковыми реализациями.
-
-Планируемые источники:
-
-- **Windows** — PDH/ETW, IP Helper, Tool Help/NT APIs, DXGI и processor topology APIs;
-- **macOS** — Mach host/task statistics, `sysctl`, IOKit и нативные power/sensor interfaces.
-
-Контракт provider, модели данных, sampling controller, history semantics и QML screens при заполнении этих backend менять не требуется.
+Linux — первый полный provider. Windows/macOS сейчас являются compile-time scaffolds, а не фейковыми реализациями.
 
 ## 🧪 Тесты и проверка
 
@@ -187,15 +191,15 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Отдельный validator проверяет repo-local agent metadata:
+Core test использует явные проверки и exit code, поэтому не исчезает под `-DNDEBUG`.
+
+Agent metadata проверяется отдельно:
 
 ```bash
 python3 scripts/validate_agent_contracts.py
 ```
 
 ## 📋 Покрытие аудита 01-edu
-
-Linux implementation соответствует функциональным проверкам официального задания:
 
 ```text
 who
@@ -207,9 +211,9 @@ df -h /
 cat /proc/net/dev
 ```
 
-В UI есть CPU/Fan/Thermal tabs, живые графики, Pause, FPS и Y-scale; RAM/SWAP/disk; process columns/filter/multi-select; IPv4; полные RX/TX tables; live network movement и адаптивная конвертация bytes.
+В UI есть CPU/Fan/Thermal tabs, live graphs, freeze анимации, рабочие FPS/Y-scale sliders; RAM/SWAP/disk; process columns/filter/multi-select; IPv4; полные RX/TX tables; live network movement и адаптивная конвертация bytes.
 
-Подробное соответствие source → audit: [`docs/audit.md`](docs/audit.md).
+Подробное соответствие: [`docs/audit.md`](docs/audit.md).
 
 Официальное задание: https://github.com/01-edu/public/tree/master/subjects/system-monitor
 
@@ -241,10 +245,9 @@ system-monitor/
 ## ⚠️ Примечания
 
 - Полный telemetry backend сейчас Linux; Windows/macOS — архитектурные заготовки.
-- CPU/process values считаются по дельтам, поэтому первый sample может быть нулевым.
-- Короткоживущие процессы могут исчезнуть во время чтения `/proc` и безопасно пропускаются.
+- Первый CPU/process sample может быть нулевым, потому что значения считаются по дельтам.
+- Короткоживущие процессы могут исчезать во время чтения `/proc` и безопасно пропускаются.
 - Sensors зависят от kernel drivers, permissions, virtualization и hardware exposure.
-- Старые audit-команды вроде `ifconfig` или `/proc/acpi/ibm/thermal` могут отсутствовать; MoneSys читает общие kernel interfaces напрямую.
 - HTML design handoff и landing page не входят в runtime приложения.
 
 ## 🧑‍💻 Автор

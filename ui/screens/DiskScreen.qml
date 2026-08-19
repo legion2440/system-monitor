@@ -49,7 +49,7 @@ ColumnLayout {
                 }
 
                 Text {
-                    text: app.diskTotal > 0 ? (app.diskUsed * 100 / app.diskTotal).toFixed(1) : "0.0"
+                    text: app.diskTotal > 0 ? Math.ceil(Number(app.diskUsagePercent)).toString() : "0"
                     color: Theme.accentStep(200)
                     font.family: Theme.monoFont
                     font.pixelSize: 42
@@ -69,7 +69,7 @@ ColumnLayout {
                 color: Theme.inset
 
                 Rectangle {
-                    width: parent.width * Math.max(0, Math.min(1, app.diskTotal > 0 ? app.diskUsed / app.diskTotal : 0))
+                    width: parent.width * Math.max(0, Math.min(1, (app.diskUsed + app.diskAvailable) > 0 ? app.diskUsed / (app.diskUsed + app.diskAvailable) : 0))
                     height: parent.height
                     radius: parent.radius
                     color: Theme.accent
@@ -89,8 +89,8 @@ ColumnLayout {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
-                    Text { text: qsTr("FREE"); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
-                    Text { text: Utils.bytes(Math.max(0, app.diskTotal - app.diskUsed)); color: Theme.textBright; font.family: Theme.monoFont; font.pixelSize: 16 }
+                    Text { text: qsTr("AVAIL"); color: Theme.textFaint; font.family: Theme.monoFont; font.pixelSize: 9 }
+                    Text { text: Utils.bytes(app.diskAvailable); color: Theme.textBright; font.family: Theme.monoFont; font.pixelSize: 16 }
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -123,7 +123,7 @@ ColumnLayout {
                 font.letterSpacing: 1.1
             }
             Text {
-                text: qsTr("The current Linux provider reports the root filesystem directly from statvfs('/'). Per-device I/O and mount enumeration are separate telemetry capabilities and will be added without changing this screen contract.")
+                text: qsTr("Reported from statvfs('/') using df(1) semantics: USED = f_blocks - f_bfree, AVAIL = f_bavail, and the displayed percentage is rounded up like df. The gap between TOTAL and USED + AVAIL is the filesystem's reserved-block pool. Per-device I/O and mount enumeration are separate telemetry capabilities.")
                 color: Theme.textMuted
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
