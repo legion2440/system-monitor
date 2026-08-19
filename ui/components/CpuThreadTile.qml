@@ -26,7 +26,7 @@ Rectangle {
         anchors.leftMargin: 7
         anchors.top: parent.top
         anchors.topMargin: 5
-        text: "THREAD " + threadIndex
+        text: "THREAD " + (threadIndex + 1)
         color: Theme.textFaint
         font.family: Theme.monoFont
         font.pixelSize: 8
