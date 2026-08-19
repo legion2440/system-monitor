@@ -46,12 +46,7 @@ ApplicationWindow {
                     height: 5
                     radius: 3
                     color: app.paused ? Theme.textFaint : Theme.accent
-                    SequentialAnimation on opacity {
-                        running: !app.paused
-                        loops: Animation.Infinite
-                        NumberAnimation { from: 1; to: 0.22; duration: 850 }
-                        NumberAnimation { from: 0.22; to: 1; duration: 850 }
-                    }
+                    opacity: app.paused ? 0.45 : 1.0
                 }
                 Text {
                     text: app.paused ? qsTr("PAUSED") : qsTr("LIVE")
@@ -129,7 +124,7 @@ ApplicationWindow {
                     CpuScreen {}
                     UnavailableScreen { title: "GPU"; detail: qsTr("GPU is part of the cross-platform provider contract. Linux DRM/NVML/ROCm, Windows DXGI/PDH and macOS Metal/IOKit backends are planned after the 01-edu Linux milestone.") }
                     MemoryScreen {}
-                    MemoryScreen {}
+                    DiskScreen {}
                     NetworkScreen {}
                     ProcessesScreen {}
                     SensorsScreen {}
