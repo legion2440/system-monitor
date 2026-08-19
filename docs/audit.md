@@ -10,20 +10,20 @@ MoneSys keeps the original assignment's Linux telemetry semantics while replacin
 | total/task states | live scan of `/proc/<pid>/stat` |
 | CPU model | `/proc/cpuinfo` model name |
 | CPU graph + current % | `/proc/stat` deltas + CPU tab |
-| Pause / FPS / Y scale | shared graph controls in CPU/Fan/Thermal view |
-| Thermal | `/sys/class/thermal` and hwmon temperature inputs |
+| Pause / FPS / Y scale | shared CPU/Fan/Thermal controls; graph freeze does not stop telemetry |
+| Thermal | `/sys/class/thermal`, hwmon, then `/proc/acpi/ibm/thermal` fallback |
 | Fan status/speed/level | hwmon `fan*_input`, optional `pwm*` level |
 | RAM / SWAP | `/proc/meminfo` |
-| Disk | `statvfs("/")` |
+| Disk | `statvfs("/")`; `Used`/`Avail` and displayed percentage follow `df` semantics |
 | Process PID/name/state/CPU/RAM | `/proc/<pid>` data and deltas |
 | Process filter | process screen search field |
-| Select multiple processes | selection keyed by PID, persistent across refresh/filter |
+| Select multiple processes | selection keyed by PID; order is stabilized while interacting |
 | IPv4 | `getifaddrs()` |
-| RX/TX raw tables | `/proc/net/dev` counters |
-| RX/TX live movement | derived bytes/second history |
-| network byte conversion | adaptive B/KB/MB/GB formatting |
-| visual range | interface usage view clamps progress range to 0..2 GiB |
+| RX/TX raw tables | absolute `/proc/net/dev` counters |
+| RX/TX live movement | bytes/second history plus session-delta progress bars |
+| network byte conversion | B/KB/MB/GB with two decimals above bytes |
+| visual range | session traffic progress range is `0..2 GiB`; absolute counters remain visible separately |
 
-The optional build alias `monitor` is a copy of the real `monesys` executable so the historical audit instruction that searches for a process named `monitor` can be reproduced without maintaining a second frontend.
+The optional build alias `build/bin/monitor` is a copy of the real `monesys` executable so the historical audit instruction that searches for a process named `monitor` can be reproduced without maintaining a second frontend.
 
-Some commands in the historical checklist are hardware/distribution-specific (`/proc/acpi/ibm/thermal`, `ifconfig`). MoneSys reads generic Linux kernel interfaces and should be compared against the available equivalent on the evaluator machine.
+The historical checklist references environment-specific tools such as `ifconfig` and `/proc/acpi/ibm/thermal`. MoneSys reads generic Linux kernel interfaces directly and also carries the ThinkPad thermal fallback for compatibility with that audit environment.

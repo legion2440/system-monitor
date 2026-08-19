@@ -50,12 +50,13 @@ Canvas {
     onVisibleChanged: {
         if (!visible) {
             animTimer.stop()
-            blend = 1
-        } else {
+            return
+        }
+        if (!paused) {
             renderSamples = samples
             blend = 1
-            requestPaint()
         }
+        requestPaint()
     }
 
     onScaleModeChanged: requestPaint()
