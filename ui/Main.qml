@@ -128,18 +128,19 @@ ApplicationWindow {
                 StackLayout {
                     anchors.fill: parent
                     currentIndex: window.section
-                    OverviewScreen {}
-                    CpuScreen {}
-                    UnavailableScreen { title: "GPU"; detail: qsTr("GPU is part of the cross-platform provider contract. Linux DRM/NVML/ROCm, Windows DXGI/PDH and macOS Metal/IOKit backends are planned after the 01-edu Linux milestone.") }
-                    MemoryScreen {}
-                    DiskScreen {}
-                    NetworkScreen {}
-                    ProcessesScreen {}
-                    SensorsScreen {}
-                    UnavailableScreen { title: qsTr("Energy"); detail: qsTr("Linux RAPL capability detection is already exposed by the provider boundary; energy counters will be added as a dedicated normalized metric.") }
-                    UnavailableScreen { title: qsTr("Services"); detail: qsTr("The provider boundary reserves services for systemd, Windows SCM and launchd without coupling them to QML.") }
-                    UnavailableScreen { title: qsTr("Logs"); detail: qsTr("Logs are intentionally outside the first Linux audit milestone. The future providers map journald, Windows Event Log and unified logging into one model.") }
-                    SettingsScreen {}
+
+                    Item { OverviewScreen { anchors.fill: parent } }
+                    Item { CpuScreen { anchors.fill: parent } }
+                    Item { UnavailableScreen { anchors.fill: parent; title: "GPU"; detail: qsTr("GPU is part of the cross-platform provider contract. Linux DRM/NVML/ROCm, Windows DXGI/PDH and macOS Metal/IOKit backends are planned after the 01-edu Linux milestone.") } }
+                    Item { MemoryScreen { anchors.fill: parent } }
+                    Item { DiskScreen { anchors.fill: parent } }
+                    Item { NetworkScreen { anchors.fill: parent } }
+                    Item { ProcessesScreen { anchors.fill: parent } }
+                    Item { SensorsScreen { anchors.fill: parent } }
+                    Item { UnavailableScreen { anchors.fill: parent; title: qsTr("Energy"); detail: qsTr("Linux RAPL capability detection is already exposed by the provider boundary; energy counters will be added as a dedicated normalized metric.") } }
+                    Item { UnavailableScreen { anchors.fill: parent; title: qsTr("Services"); detail: qsTr("The provider boundary reserves services for systemd, Windows SCM and launchd without coupling them to QML.") } }
+                    Item { UnavailableScreen { anchors.fill: parent; title: qsTr("Logs"); detail: qsTr("Logs are intentionally outside the first Linux audit milestone. The future providers map journald, Windows Event Log and unified logging into one model.") } }
+                    Item { SettingsScreen { anchors.fill: parent } }
                 }
             }
         }
