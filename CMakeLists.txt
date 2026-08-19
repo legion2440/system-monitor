@@ -57,6 +57,12 @@ set_source_files_properties(ui/screens/SensorsScreen.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(ui/screens/SettingsScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/SettingsScreen.qml)
 set_source_files_properties(ui/screens/UnavailableScreen.qml PROPERTIES QT_RESOURCE_ALIAS screens/UnavailableScreen.qml)
 
+# Qt 6.8+ generates these redirects automatically via QTP0004. Keep explicit
+# redirects for the minimum supported Qt 6.4 so files in subdirectories share
+# the MoneSys implicit import and can resolve the Theme singleton reliably.
+set_source_files_properties(ui/components/qmldir PROPERTIES QT_RESOURCE_ALIAS components/qmldir)
+set_source_files_properties(ui/screens/qmldir PROPERTIES QT_RESOURCE_ALIAS screens/qmldir)
+
 qt_add_executable(monesys src/main.cpp)
 qt_add_qml_module(monesys
     URI MoneSys
@@ -79,6 +85,9 @@ qt_add_qml_module(monesys
         ui/screens/SensorsScreen.qml
         ui/screens/SettingsScreen.qml
         ui/screens/UnavailableScreen.qml
+    RESOURCES
+        ui/components/qmldir
+        ui/screens/qmldir
 )
 target_link_libraries(monesys PRIVATE monesys_qt Qt6::Quick Qt6::QuickControls2)
 set_target_properties(monesys PROPERTIES
