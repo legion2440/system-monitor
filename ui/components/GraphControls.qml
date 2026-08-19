@@ -17,9 +17,18 @@ Rectangle {
         spacing: 8
 
         CheckBox {
-            text: app.paused ? qsTr("Animation off") : qsTr("Animation on")
+            id: animationToggle
+            text: qsTr("Animate graph")
             checked: !app.paused
             onToggled: app.paused = !checked
+
+            contentItem: Text {
+                leftPadding: animationToggle.indicator.width + animationToggle.spacing
+                text: animationToggle.text
+                color: Theme.textBright
+                font.pixelSize: 11
+                verticalAlignment: Text.AlignVCenter
+            }
         }
 
         Text { text: qsTr("FPS") + " " + app.graphFps; color: Theme.textMuted; font.family: Theme.monoFont; font.pixelSize: 10 }
