@@ -402,13 +402,15 @@ std::vector<SensorInfo> LinuxMetricProvider::readSensors() {
             if (ec || entry.path().filename().string().rfind("thermal_zone", 0) != 0) continue;
             const auto tempText = readFirstLine(entry.path() / "temp");
             if (tempText.empty()) continue;
-            const auto raw = parseDouble(tempText);
+            const auto celsius = parseDouble(tempText) / 1000.0;
+            if (!std::isfinite(celsius) || celsius <= 0.0 || celsius > 200.0) continue;
             SensorInfo sensor;
             sensor.name = readFirstLine(entry.path() / "type");
             if (sensor.name.empty()) sensor.name = entry.path().filename().string();
+            sensor.chip = "thermal";
             sensor.source = (entry.path() / "temp").string();
             sensor.unit = "°C";
-            sensor.value = raw / 1000.0;
+            sensor.value = celsius;
             sensors.push_back(std::move(sensor));
         }
     }
@@ -426,23 +428,10 @@ std::vector<SensorInfo> LinuxMetricProvider::readSensors() {
                 if (rawText.empty()) continue;
                 const auto prefix = name.substr(0, name.find("_input"));
                 auto label = readFirstLine(hwmon.path() / (prefix + "_label"));
-                if (label.empty()) label = chip.empty() ? prefix : chip + " " + prefix;
-                const auto raw = parseDouble(rawText);
-                sensors.push_back({label, file.path().string(), "°C", raw / 1000.0});
-            }
-        }
-    }
-
-    // The historical 01-edu audit explicitly reads this ThinkPad-specific proc file.
-    // Modern Linux normally exposes the same class of data through sysfs/hwmon, but use
-    // the legacy source as a compatibility fallback when no generic sensor is available.
-    if (sensors.empty()) {
-        std::ifstream legacy("/proc/acpi/ibm/thermal");
-        std::string label;
-        if (legacy >> label && label.rfind("temperatures", 0) == 0) {
-            double value{};
-            if (legacy >> value && value > 0.0) {
-                sensors.push_back({"ThinkPad CPU", "/proc/acpi/ibm/thermal", "°C", value});
+                if (label.empty()) label = prefix;
+                const auto celsius = parseDouble(rawText) / 1000.0;
+                if (!std::isfinite(celsius) || celsius <= 0.0 || celsius > 200.0) continue;
+                sensors.push_back({label, chip, file.path().string(), "°C", celsius});
             }
         }
     }
@@ -488,7 +477,7 @@ void LinuxMetricProvider::detectCapabilities() {
     capabilities_.disk = true;
     capabilities_.network = fs::exists("/proc/net/dev");
     capabilities_.processes = fs::exists("/proc");
-    capabilities_.thermal = rootHasPrefix("/sys/class/thermal", "thermal_zone") || rootHasPrefix("/sys/class/hwmon", "hwmon") || fs::exists("/proc/acpi/ibm/thermal");
+    capabilities_.thermal = rootHasPrefix("/sys/class/thermal", "thermal_zone") || rootHasPrefix("/sys/class/hwmon", "hwmon");
     capabilities_.fan = rootHasPrefix("/sys/class/hwmon", "hwmon");
     capabilities_.energy = fs::exists("/sys/class/powercap");
     capabilities_.services = fs::exists("/run/systemd/system");
