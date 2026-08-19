@@ -10,7 +10,8 @@ class NetworkModel final : public QAbstractListModel {
 public:
     enum Role { NameRole=Qt::UserRole+1, Ipv4Role, RxBytesRole, RxPacketsRole, RxErrorsRole, RxDroppedRole, RxFifoRole,
                 RxFrameRole, RxCompressedRole, RxMulticastRole, TxBytesRole, TxPacketsRole, TxErrorsRole, TxDroppedRole,
-                TxFifoRole, TxCollisionsRole, TxCarrierRole, TxCompressedRole, RxRateRole, TxRateRole };
+                TxFifoRole, TxCollisionsRole, TxCarrierRole, TxCompressedRole, RxRateRole, TxRateRole,
+                RxSessionRole, TxSessionRole };
     explicit NetworkModel(QObject* parent=nullptr);
     int rowCount(const QModelIndex& parent=QModelIndex()) const override;
     QVariant data(const QModelIndex& index,int role) const override;

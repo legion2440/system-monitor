@@ -34,6 +34,8 @@ class AppController final : public QObject {
     Q_PROPERTY(qulonglong swapUsed READ swapUsed NOTIFY snapshotChanged)
     Q_PROPERTY(qulonglong diskTotal READ diskTotal NOTIFY snapshotChanged)
     Q_PROPERTY(qulonglong diskUsed READ diskUsed NOTIFY snapshotChanged)
+    Q_PROPERTY(qulonglong diskAvailable READ diskAvailable NOTIFY snapshotChanged)
+    Q_PROPERTY(double diskUsagePercent READ diskUsagePercent NOTIFY snapshotChanged)
     Q_PROPERTY(double aggregateRxRate READ aggregateRxRate NOTIFY snapshotChanged)
     Q_PROPERTY(double aggregateTxRate READ aggregateTxRate NOTIFY snapshotChanged)
     Q_PROPERTY(double temperature READ temperature NOTIFY snapshotChanged)
@@ -58,6 +60,7 @@ class AppController final : public QObject {
     Q_PROPERTY(double graphYScale READ graphYScale WRITE setGraphYScale NOTIFY graphYScaleChanged)
     Q_PROPERTY(QString yScaleMode READ yScaleMode WRITE setYScaleMode NOTIFY yScaleModeChanged)
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY pausedChanged)
+    Q_PROPERTY(bool collecting READ collecting WRITE setCollecting NOTIFY collectingChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY snapshotChanged)
 
 public:
@@ -67,7 +70,7 @@ public:
     [[nodiscard]] QString osName() const; [[nodiscard]] QString userName() const; [[nodiscard]] QString hostname() const; [[nodiscard]] QString cpuModel() const;
     [[nodiscard]] qulonglong taskTotal() const; [[nodiscard]] qulonglong taskRunning() const; [[nodiscard]] qulonglong taskSleeping() const; [[nodiscard]] qulonglong taskBlocked() const; [[nodiscard]] qulonglong taskZombie() const; [[nodiscard]] qulonglong taskStopped() const;
     [[nodiscard]] double cpuUsage() const; [[nodiscard]] double cpuFrequencyMHz() const; [[nodiscard]] QVariantList coreUsage() const;
-    [[nodiscard]] qulonglong ramTotal() const; [[nodiscard]] qulonglong ramUsed() const; [[nodiscard]] qulonglong swapTotal() const; [[nodiscard]] qulonglong swapUsed() const; [[nodiscard]] qulonglong diskTotal() const; [[nodiscard]] qulonglong diskUsed() const;
+    [[nodiscard]] qulonglong ramTotal() const; [[nodiscard]] qulonglong ramUsed() const; [[nodiscard]] qulonglong swapTotal() const; [[nodiscard]] qulonglong swapUsed() const; [[nodiscard]] qulonglong diskTotal() const; [[nodiscard]] qulonglong diskUsed() const; [[nodiscard]] qulonglong diskAvailable() const; [[nodiscard]] double diskUsagePercent() const;
     [[nodiscard]] double aggregateRxRate() const{return aggregateRxRate_;} [[nodiscard]] double aggregateTxRate() const{return aggregateTxRate_;}
     [[nodiscard]] double temperature() const{return temperature_;} [[nodiscard]] QString temperatureSource() const{return temperatureSource_;}
     [[nodiscard]] bool thermalAvailable() const{return snapshot_.capabilities.thermal&&temperature_>-200.0;}
@@ -80,10 +83,11 @@ public:
     [[nodiscard]] double graphYScale() const{return graphYScale_;} void setGraphYScale(double scale);
     [[nodiscard]] QString yScaleMode() const{return yScaleMode_;} void setYScaleMode(const QString& mode);
     [[nodiscard]] bool paused() const{return paused_;} void setPaused(bool paused);
+    [[nodiscard]] bool collecting() const{return collecting_;} void setCollecting(bool collecting);
     [[nodiscard]] QString lastError() const{return QString::fromStdString(snapshot_.error);}
 
 signals:
-    void snapshotChanged(); void historyChanged(); void pollIntervalChanged(); void graphFpsChanged(); void graphYScaleChanged(); void yScaleModeChanged(); void pausedChanged();
+    void snapshotChanged(); void historyChanged(); void pollIntervalChanged(); void graphFpsChanged(); void graphYScaleChanged(); void yScaleModeChanged(); void pausedChanged(); void collectingChanged();
 
 private:
     void applySnapshot(Snapshot snapshot);
@@ -93,7 +97,7 @@ private:
     std::unique_ptr<SamplingController> sampler_;
     TimedHistory<double> cpuHistory_,ramHistory_,rxHistory_,txHistory_,temperatureHistory_,fanHistory_;
     double aggregateRxRate_{}; double aggregateTxRate_{}; double temperature_{-273.15}; QString temperatureSource_;
-    int pollIntervalMs_{1000}; int graphFps_{30}; double graphYScale_{1.0}; QString yScaleMode_{"Auto"}; bool paused_{false};
+    int pollIntervalMs_{1000}; int graphFps_{30}; double graphYScale_{1.0}; QString yScaleMode_{"Auto"}; bool paused_{false}; bool collecting_{true};
 };
 
 } // namespace monesys

@@ -53,6 +53,7 @@ struct MemoryStats {
     std::uint64_t swapUsedBytes{};
     std::uint64_t diskTotalBytes{};
     std::uint64_t diskUsedBytes{};
+    std::uint64_t diskAvailableBytes{};
 };
 
 struct NetworkCounters {
@@ -73,6 +74,8 @@ struct NetworkInterfaceStats {
     NetworkCounters tx;
     double rxBytesPerSecond{};
     double txBytesPerSecond{};
+    std::uint64_t rxSessionBytes{};
+    std::uint64_t txSessionBytes{};
 };
 
 struct ProcessInfo {

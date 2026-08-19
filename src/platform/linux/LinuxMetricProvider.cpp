@@ -16,7 +16,6 @@
 #include <fstream>
 #include <sstream>
 #include <string_view>
-#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -119,7 +118,6 @@ std::string linuxDisplayName(const std::string& distribution) {
 LinuxMetricProvider::LinuxMetricProvider() {
     clockTicksPerSecond_ = std::max<long>(1, ::sysconf(_SC_CLK_TCK));
     pageSize_ = std::max<long>(1, ::sysconf(_SC_PAGESIZE));
-    logicalCpuCount_ = std::max(1u, std::thread::hardware_concurrency());
     staticSystem_.osName = readOsName();
     staticSystem_.userName = readUserName();
     staticSystem_.hostname = readHostname();
@@ -135,8 +133,9 @@ Snapshot LinuxMetricProvider::poll() {
     const auto currentCpu = readCpuTimes();
     std::uint64_t totalCpuDelta{};
     snapshot.cpu = buildCpuStats(currentCpu, totalCpuDelta);
-    snapshot.memory = readMemoryAndDisk();
-    snapshot.processes = readProcesses(totalCpuDelta, snapshot.system.tasks);
+    const auto meminfo = readMemInfoValues();
+    snapshot.memory = readMemoryAndDisk(meminfo);
+    snapshot.processes = readProcesses(totalCpuDelta, snapshot.memory.ramTotalBytes, snapshot.system.tasks);
     snapshot.network = readNetwork();
     snapshot.sensors = readSensors();
     snapshot.fan = readFan();
@@ -218,8 +217,13 @@ LinuxMetricProvider::CpuTimes LinuxMetricProvider::readCpuTimes() {
         std::uint64_t value{};
         while (row >> value) values.push_back(value);
         if (values.size() < 4) continue;
+
+        // guest/guest_nice are already included in user/nice. Summing them again
+        // inflates CPU totals on virtualized systems, so only fields 0..7 count.
         std::uint64_t total{};
-        for (const auto tick : values) total += tick;
+        const auto realFields = std::min<std::size_t>(values.size(), 8);
+        for (std::size_t i = 0; i < realFields; ++i) total += values[i];
+
         const std::uint64_t idle = values[3] + (values.size() > 4 ? values[4] : 0);
         if (label == "cpu") { result.total = total; result.idle = idle; }
         else result.cores.emplace_back(total, idle);
@@ -231,6 +235,7 @@ CpuStats LinuxMetricProvider::buildCpuStats(const CpuTimes& current, std::uint64
     CpuStats stats;
     stats.frequencyMHz = readCpuFrequencyMHz();
     stats.coreUsagePercent.resize(current.cores.size(), 0.0);
+    if (!current.cores.empty()) logicalCpuCount_ = static_cast<unsigned>(current.cores.size());
     if (!previousCpu_) { previousCpu_ = current; return stats; }
     const auto& previous = *previousCpu_;
     totalDelta = current.total >= previous.total ? current.total - previous.total : 0;
@@ -246,28 +251,28 @@ CpuStats LinuxMetricProvider::buildCpuStats(const CpuTimes& current, std::uint64
     return stats;
 }
 
-MemoryStats LinuxMetricProvider::readMemoryAndDisk() {
+MemoryStats LinuxMetricProvider::readMemoryAndDisk(const std::unordered_map<std::string, std::uint64_t>& mem) {
     MemoryStats stats;
-    const auto mem = readMemInfoValues();
     stats.ramTotalBytes = memInfoBytes(mem, "MemTotal");
     const auto available = memInfoBytes(mem, "MemAvailable");
     stats.ramUsedBytes = stats.ramTotalBytes >= available ? stats.ramTotalBytes - available : 0;
     stats.swapTotalBytes = memInfoBytes(mem, "SwapTotal");
     const auto swapFree = memInfoBytes(mem, "SwapFree");
     stats.swapUsedBytes = stats.swapTotalBytes >= swapFree ? stats.swapTotalBytes - swapFree : 0;
+
     struct statvfs fsStats {};
     if (::statvfs("/", &fsStats) == 0) {
-        stats.diskTotalBytes = static_cast<std::uint64_t>(fsStats.f_blocks) * fsStats.f_frsize;
-        const auto freeBytes = static_cast<std::uint64_t>(fsStats.f_bfree) * fsStats.f_frsize;
-        stats.diskUsedBytes = stats.diskTotalBytes >= freeBytes ? stats.diskTotalBytes - freeBytes : 0;
+        const auto unit = static_cast<std::uint64_t>(fsStats.f_frsize);
+        stats.diskTotalBytes = static_cast<std::uint64_t>(fsStats.f_blocks) * unit;
+        stats.diskUsedBytes = static_cast<std::uint64_t>(fsStats.f_blocks - fsStats.f_bfree) * unit;
+        stats.diskAvailableBytes = static_cast<std::uint64_t>(fsStats.f_bavail) * unit;
     }
     return stats;
 }
 
-std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalCpuDelta, TaskStats& tasks) {
+std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalCpuDelta, std::uint64_t ramTotal, TaskStats& tasks) {
     std::vector<ProcessInfo> processes;
     std::unordered_map<std::int64_t, std::uint64_t> nextTicks;
-    const auto ramTotal = memInfoBytes(readMemInfoValues(), "MemTotal");
     std::error_code ec;
     for (const auto& entry : fs::directory_iterator("/proc", fs::directory_options::skip_permission_denied, ec)) {
         if (ec || !isPidDirectory(entry)) continue;
@@ -297,6 +302,7 @@ std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalC
             process.cpuPercent = 100.0 * static_cast<double>(delta) * static_cast<double>(logicalCpuCount_) / static_cast<double>(totalCpuDelta);
         }
         nextTicks[pid] = processTicks;
+
         struct stat fileStats {};
         const auto procPath = entry.path().string();
         if (::stat(procPath.c_str(), &fileStats) == 0) process.user = userNameFromUid(fileStats.st_uid);
@@ -304,12 +310,15 @@ std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalC
         std::replace(process.commandLine.begin(), process.commandLine.end(), '\0', ' ');
         process.commandLine = trim(process.commandLine);
         process.cgroup = trim(readTextFile(entry.path() / "cgroup"));
+
         std::ifstream io(entry.path() / "io");
-        std::string key; std::uint64_t value{};
+        std::string key;
+        std::uint64_t value{};
         while (io >> key >> value) {
             if (key == "read_bytes:") process.readBytes = value;
             else if (key == "write_bytes:") process.writeBytes = value;
         }
+
         ++tasks.total;
         switch (state) {
         case 'R': ++tasks.running; break;
@@ -322,6 +331,7 @@ std::vector<ProcessInfo> LinuxMetricProvider::readProcesses(std::uint64_t totalC
         }
         processes.push_back(std::move(process));
     }
+
     previousProcessTicks_.swap(nextTicks);
     std::sort(processes.begin(), processes.end(), [](const ProcessInfo& left, const ProcessInfo& right) {
         if (std::abs(left.cpuPercent - right.cpuPercent) > 0.001) return left.cpuPercent > right.cpuPercent;
@@ -352,7 +362,8 @@ std::vector<NetworkInterfaceStats> LinuxMetricProvider::readNetwork() {
     std::unordered_map<std::string, NetworkPrevious> next;
     std::ifstream stream("/proc/net/dev");
     std::string line;
-    std::getline(stream, line); std::getline(stream, line);
+    std::getline(stream, line);
+    std::getline(stream, line);
     while (std::getline(stream, line)) {
         const auto colon = line.find(':');
         if (colon == std::string::npos) continue;
@@ -360,7 +371,15 @@ std::vector<NetworkInterfaceStats> LinuxMetricProvider::readNetwork() {
         item.name = trim(line.substr(0, colon));
         if (const auto address = ipv4.find(item.name); address != ipv4.end()) item.ipv4 = address->second;
         std::istringstream values(line.substr(colon + 1));
-        values >> item.rx.bytes >> item.rx.packets >> item.rx.errors >> item.rx.dropped >> item.rx.fifo >> item.rx.frameOrCollisions >> item.rx.compressed >> item.rx.multicastOrCarrier >> item.tx.bytes >> item.tx.packets >> item.tx.errors >> item.tx.dropped >> item.tx.fifo >> item.tx.frameOrCollisions >> item.tx.multicastOrCarrier >> item.tx.compressed;
+        values >> item.rx.bytes >> item.rx.packets >> item.rx.errors >> item.rx.dropped >> item.rx.fifo >> item.rx.frameOrCollisions >> item.rx.compressed >> item.rx.multicastOrCarrier
+               >> item.tx.bytes >> item.tx.packets >> item.tx.errors >> item.tx.dropped >> item.tx.fifo >> item.tx.frameOrCollisions >> item.tx.multicastOrCarrier >> item.tx.compressed;
+
+        const auto [baselineIt, inserted] = networkBaseline_.try_emplace(item.name, NetworkBaseline{item.rx.bytes, item.tx.bytes});
+        (void)inserted;
+        const auto& baseline = baselineIt->second;
+        item.rxSessionBytes = item.rx.bytes >= baseline.rx ? item.rx.bytes - baseline.rx : item.rx.bytes;
+        item.txSessionBytes = item.tx.bytes >= baseline.tx ? item.tx.bytes - baseline.tx : item.tx.bytes;
+
         if (const auto previous = previousNetwork_.find(item.name); previous != previousNetwork_.end() && seconds > 0.0) {
             if (item.rx.bytes >= previous->second.rx) item.rxBytesPerSecond = static_cast<double>(item.rx.bytes - previous->second.rx) / seconds;
             if (item.tx.bytes >= previous->second.tx) item.txBytesPerSecond = static_cast<double>(item.tx.bytes - previous->second.tx) / seconds;
@@ -376,6 +395,7 @@ std::vector<NetworkInterfaceStats> LinuxMetricProvider::readNetwork() {
 std::vector<SensorInfo> LinuxMetricProvider::readSensors() {
     std::vector<SensorInfo> sensors;
     std::error_code ec;
+
     const fs::path thermalRoot("/sys/class/thermal");
     if (fs::exists(thermalRoot, ec)) {
         for (const auto& entry : fs::directory_iterator(thermalRoot, fs::directory_options::skip_permission_denied, ec)) {
@@ -388,10 +408,11 @@ std::vector<SensorInfo> LinuxMetricProvider::readSensors() {
             if (sensor.name.empty()) sensor.name = entry.path().filename().string();
             sensor.source = (entry.path() / "temp").string();
             sensor.unit = "°C";
-            sensor.value = std::abs(raw) > 1000.0 ? raw / 1000.0 : raw;
+            sensor.value = raw / 1000.0;
             sensors.push_back(std::move(sensor));
         }
     }
+
     const fs::path hwmonRoot("/sys/class/hwmon");
     ec.clear();
     if (fs::exists(hwmonRoot, ec)) {
@@ -407,10 +428,25 @@ std::vector<SensorInfo> LinuxMetricProvider::readSensors() {
                 auto label = readFirstLine(hwmon.path() / (prefix + "_label"));
                 if (label.empty()) label = chip.empty() ? prefix : chip + " " + prefix;
                 const auto raw = parseDouble(rawText);
-                sensors.push_back({label, file.path().string(), "°C", std::abs(raw) > 1000.0 ? raw / 1000.0 : raw});
+                sensors.push_back({label, file.path().string(), "°C", raw / 1000.0});
             }
         }
     }
+
+    // The historical 01-edu audit explicitly reads this ThinkPad-specific proc file.
+    // Modern Linux normally exposes the same class of data through sysfs/hwmon, but use
+    // the legacy source as a compatibility fallback when no generic sensor is available.
+    if (sensors.empty()) {
+        std::ifstream legacy("/proc/acpi/ibm/thermal");
+        std::string label;
+        if (legacy >> label && label.rfind("temperatures", 0) == 0) {
+            double value{};
+            if (legacy >> value && value > 0.0) {
+                sensors.push_back({"ThinkPad CPU", "/proc/acpi/ibm/thermal", "°C", value});
+            }
+        }
+    }
+
     return sensors;
 }
 
@@ -452,7 +488,7 @@ void LinuxMetricProvider::detectCapabilities() {
     capabilities_.disk = true;
     capabilities_.network = fs::exists("/proc/net/dev");
     capabilities_.processes = fs::exists("/proc");
-    capabilities_.thermal = rootHasPrefix("/sys/class/thermal", "thermal_zone") || rootHasPrefix("/sys/class/hwmon", "hwmon");
+    capabilities_.thermal = rootHasPrefix("/sys/class/thermal", "thermal_zone") || rootHasPrefix("/sys/class/hwmon", "hwmon") || fs::exists("/proc/acpi/ibm/thermal");
     capabilities_.fan = rootHasPrefix("/sys/class/hwmon", "hwmon");
     capabilities_.energy = fs::exists("/sys/class/powercap");
     capabilities_.services = fs::exists("/run/systemd/system");

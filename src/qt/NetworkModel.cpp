@@ -16,8 +16,10 @@ QVariant NetworkModel::data(const QModelIndex& index,int role) const {
     case TxErrorsRole:return QVariant::fromValue<qulonglong>(i.tx.errors); case TxDroppedRole:return QVariant::fromValue<qulonglong>(i.tx.dropped);
     case TxFifoRole:return QVariant::fromValue<qulonglong>(i.tx.fifo); case TxCollisionsRole:return QVariant::fromValue<qulonglong>(i.tx.frameOrCollisions);
     case TxCarrierRole:return QVariant::fromValue<qulonglong>(i.tx.multicastOrCarrier); case TxCompressedRole:return QVariant::fromValue<qulonglong>(i.tx.compressed);
-    case RxRateRole:return i.rxBytesPerSecond; case TxRateRole:return i.txBytesPerSecond; default:return {};}
+    case RxRateRole:return i.rxBytesPerSecond; case TxRateRole:return i.txBytesPerSecond;
+    case RxSessionRole:return QVariant::fromValue<qulonglong>(i.rxSessionBytes); case TxSessionRole:return QVariant::fromValue<qulonglong>(i.txSessionBytes);
+    default:return {};}
 }
-QHash<int,QByteArray> NetworkModel::roleNames() const { return {{NameRole,"name"},{Ipv4Role,"ipv4"},{RxBytesRole,"rxBytes"},{RxPacketsRole,"rxPackets"},{RxErrorsRole,"rxErrors"},{RxDroppedRole,"rxDropped"},{RxFifoRole,"rxFifo"},{RxFrameRole,"rxFrame"},{RxCompressedRole,"rxCompressed"},{RxMulticastRole,"rxMulticast"},{TxBytesRole,"txBytes"},{TxPacketsRole,"txPackets"},{TxErrorsRole,"txErrors"},{TxDroppedRole,"txDropped"},{TxFifoRole,"txFifo"},{TxCollisionsRole,"txCollisions"},{TxCarrierRole,"txCarrier"},{TxCompressedRole,"txCompressed"},{RxRateRole,"rxRate"},{TxRateRole,"txRate"}}; }
+QHash<int,QByteArray> NetworkModel::roleNames() const { return {{NameRole,"name"},{Ipv4Role,"ipv4"},{RxBytesRole,"rxBytes"},{RxPacketsRole,"rxPackets"},{RxErrorsRole,"rxErrors"},{RxDroppedRole,"rxDropped"},{RxFifoRole,"rxFifo"},{RxFrameRole,"rxFrame"},{RxCompressedRole,"rxCompressed"},{RxMulticastRole,"rxMulticast"},{TxBytesRole,"txBytes"},{TxPacketsRole,"txPackets"},{TxErrorsRole,"txErrors"},{TxDroppedRole,"txDropped"},{TxFifoRole,"txFifo"},{TxCollisionsRole,"txCollisions"},{TxCarrierRole,"txCarrier"},{TxCompressedRole,"txCompressed"},{RxRateRole,"rxRate"},{TxRateRole,"txRate"},{RxSessionRole,"rxSession"},{TxSessionRole,"txSession"}}; }
 void NetworkModel::updateInterfaces(std::vector<NetworkInterfaceStats> interfaces){ beginResetModel(); interfaces_=std::move(interfaces); endResetModel(); }
 }
