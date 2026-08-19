@@ -98,6 +98,7 @@ struct ProcessInfo {
 
 struct SensorInfo {
     std::string name;
+    std::string chip;
     std::string source;
     std::string unit;
     double value{};
