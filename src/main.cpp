@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QUrl>
 
 #include <cstdlib>
 
@@ -21,7 +22,7 @@ int main(int argc, char* argv[]) {
         QCoreApplication::exit(EXIT_FAILURE);
     }, Qt::QueuedConnection);
 
-    engine.loadFromModule(QStringLiteral("MoneSys"), QStringLiteral("Main"));
+    engine.load(QUrl(QStringLiteral("qrc:/qt/qml/MoneSys/Main.qml")));
     controller.start();
     return app.exec();
 }

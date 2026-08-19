@@ -10,8 +10,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(MONESYS_BUILD_TESTS "Build MoneSys tests" ON)
 option(MONESYS_BUILD_AUDIT_ALIAS "Build a second executable named monitor for the 01-edu audit" ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickControls2)
-qt_standard_project_setup(REQUIRES 6.5)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Quick QuickControls2)
+qt_standard_project_setup(REQUIRES 6.4)
 
 add_library(monesys_core STATIC
     src/core/SamplingController.cpp
@@ -61,6 +61,7 @@ qt_add_executable(monesys src/main.cpp)
 qt_add_qml_module(monesys
     URI MoneSys
     VERSION 1.0
+    RESOURCE_PREFIX "/qt/qml"
     QML_FILES
         ui/Main.qml
         ui/Theme.qml
