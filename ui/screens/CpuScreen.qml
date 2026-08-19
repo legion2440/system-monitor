@@ -9,12 +9,14 @@ ColumnLayout {
     anchors.fill: parent
     anchors.margins: 16
     spacing: 12
+    clip: true
 
     RowLayout {
         Layout.fillWidth: true
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
             spacing: 2
             Text {
                 text: qsTr("PROCESSOR")
@@ -32,27 +34,36 @@ ColumnLayout {
         }
 
         ColumnLayout {
+            Layout.preferredWidth: 160
+            Layout.minimumWidth: 130
+            Layout.maximumWidth: 160
+            Layout.alignment: Qt.AlignRight
             spacing: 2
             Text {
+                Layout.fillWidth: true
                 text: Utils.ghz(app.cpuFrequencyMHz)
                 color: Theme.textSecond
                 font.family: Theme.monoFont
                 font.pixelSize: 13
                 horizontalAlignment: Text.AlignRight
-                Layout.alignment: Qt.AlignRight
+                elide: Text.ElideLeft
             }
             Text {
+                Layout.fillWidth: true
                 text: app.coreUsage.length + qsTr(" logical processors")
                 color: Theme.textFaint
                 font.family: Theme.monoFont
                 font.pixelSize: 9
                 horizontalAlignment: Text.AlignRight
-                Layout.alignment: Qt.AlignRight
+                elide: Text.ElideLeft
             }
         }
     }
 
-    GraphControls { Layout.fillWidth: true }
+    GraphControls {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+    }
 
     TabBar {
         id: tabs
