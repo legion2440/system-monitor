@@ -8,6 +8,25 @@
 #include <iterator>
 
 namespace monesys {
+namespace {
+
+int temperatureSensorPriority(const SensorInfo& sensor) {
+    if (!std::isfinite(sensor.value) || sensor.value <= 0.0 || sensor.value > 200.0) return -1;
+
+    const auto label = QString::fromStdString(sensor.name).toLower();
+    const auto chip = QString::fromStdString(sensor.chip).toLower();
+
+    if (label.contains("tdie")) return 700;
+    if (label.contains("tctl")) return 650;
+    if (label.contains("package id 0")) return 600;
+    if (label.contains("package")) return 550;
+    if (label.contains("core 0")) return 500;
+    if (chip.contains("k10temp") || chip.contains("coretemp") || chip.contains("zenpower")) return 400;
+    if (label.contains("cpu")) return 300;
+    return 0;
+}
+
+} // namespace
 
 AppController::AppController(QObject* parent)
     : QObject(parent), processModel_(this), networkModel_(this), sensorModel_(this),
@@ -40,10 +59,13 @@ void AppController::applySnapshot(Snapshot snapshot){
     snapshot_=std::move(snapshot); aggregateRxRate_=0.0; aggregateTxRate_=0.0;
     for(const auto& iface:snapshot_.network){ if(iface.name=="lo")continue; aggregateRxRate_+=iface.rxBytesPerSecond; aggregateTxRate_+=iface.txBytesPerSecond; }
     temperature_=-273.15; temperatureSource_.clear();
-    if(!snapshot_.sensors.empty()){
-        const auto preferred=std::find_if(snapshot_.sensors.begin(),snapshot_.sensors.end(),[](const SensorInfo& sensor){ const auto lower=QString::fromStdString(sensor.name).toLower(); return lower.contains("cpu")||lower.contains("package")||lower.contains("tctl")||lower.contains("coretemp"); });
-        const auto& sensor=preferred==snapshot_.sensors.end()?snapshot_.sensors.front():*preferred; temperature_=sensor.value; temperatureSource_=QString::fromStdString(sensor.source);
+    const SensorInfo* preferred=nullptr;
+    int preferredPriority=-1;
+    for(const auto& sensor:snapshot_.sensors){
+        const int priority=temperatureSensorPriority(sensor);
+        if(priority>preferredPriority){preferred=&sensor;preferredPriority=priority;}
     }
+    if(preferred!=nullptr){temperature_=preferred->value;temperatureSource_=QString::fromStdString(preferred->source);}
     const auto now=TimedHistory<double>::Clock::now(); cpuHistory_.push(snapshot_.cpu.usagePercent,now);
     const auto ramPercent=snapshot_.memory.ramTotalBytes==0?0.0:100.0*static_cast<double>(snapshot_.memory.ramUsedBytes)/static_cast<double>(snapshot_.memory.ramTotalBytes);
     ramHistory_.push(ramPercent,now); rxHistory_.push(aggregateRxRate_,now); txHistory_.push(aggregateTxRate_,now);
