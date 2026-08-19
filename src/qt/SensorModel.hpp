@@ -6,7 +6,7 @@ namespace monesys {
 class SensorModel final:public QAbstractListModel{
     Q_OBJECT
 public:
-    enum Role{NameRole=Qt::UserRole+1,SourceRole,UnitRole,ValueRole};
+    enum Role{NameRole=Qt::UserRole+1,ChipRole,SourceRole,UnitRole,ValueRole};
     explicit SensorModel(QObject* parent=nullptr);
     int rowCount(const QModelIndex& parent=QModelIndex()) const override;
     QVariant data(const QModelIndex& index,int role) const override;
